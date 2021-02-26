@@ -1,0 +1,19 @@
+{
+  "name": "emergency-response-mobile-app",
+  "version": "1.0.0",
+  "description": "Mobile app for the Emergency Response Demo",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "build": "cd client && (npm install && npm run build)",
+    "dev": "nodemon server.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.17.1",
+    "password-generator": "^2.3.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
+  }
+}
