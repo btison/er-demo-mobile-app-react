@@ -7,6 +7,7 @@ class App extends Component {
 
   // Fetch passwords after first mount
   componentDidMount() {
+    console.log((window as any)['_env'].url);
     this.getPasswords();
   }
 

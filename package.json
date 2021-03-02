@@ -4,14 +4,15 @@
   "description": "Mobile app for the Emergency Response Demo",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node set-config.js && node server.js",
     "build": "cd client && (npm install && npm run build)",
     "dev": "nodemon server.js"
   },
   "license": "MIT",
   "dependencies": {
     "express": "^4.17.1",
-    "password-generator": "^2.3.2"
+    "password-generator": "^2.3.2",
+    "replace": "^1.2.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.7"
