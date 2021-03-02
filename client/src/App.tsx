@@ -1,65 +1,54 @@
 import React, { Component } from 'react';
+import Keycloak from 'keycloak-js';
 import './App.css';
 
-class App extends Component {
-  // Initialize state
-  state = { passwords: [] }
+interface MyProps {};
+interface MyState {
+  keycloak: Keycloak.KeycloakInstance | null,
+  authenticated: boolean
+}
+
+class App extends React.Component<MyProps, MyState> {
+
+  constructor(props: any) {
+    super(props);
+    this.state = { keycloak: null, authenticated: false };
+  }
 
   // Fetch passwords after first mount
   componentDidMount() {
     console.log((window as any)['_env'].url);
-    this.getPasswords();
-  }
-
-  getPasswords = () => {
-    // Get the passwords and store them in state
-    fetch('/api/passwords')
-      .then(res => res.json())
-      .then(passwords => this.setState({ passwords }));
+    const url = (window as any)['_env'].url;
+    const realm = (window as any)['_env'].realm;
+    const clientId = (window as any)['_env'].clientId;
+    const keycloak = Keycloak({
+      url: url,
+      realm: realm,
+      clientId: clientId
+    });
+    keycloak.init({onLoad: 'login-required'}).then(authenticated => {
+      this.setState({ keycloak: keycloak, authenticated: authenticated })
+    })
   }
 
   render() {
-    const { passwords } = this.state;
-
+    if (this.state.keycloak) {
+      if (this.state.authenticated) {
+        return (
+          <div>
+            <p>This is a Keycloak-secured component of your application. You shouldn't be able
+            to see this unless you've authenticated with Keycloak.</p>
+          </div>
+        );
+      } else {
+        return (<div>Unable to authenticate!</div>);
+      }
+    }
     return (
-      <div className="App">
-        {/* Render the passwords if we have them */}
-        {passwords.length ? (
-          <div>
-            <h1>5 Passwords.</h1>
-            <ul className="passwords">
-              {/*
-                Generally it's bad to use "index" as a key.
-                It's ok for this example because there will always
-                be the same number of passwords, and they never
-                change positions in the array.
-              */}
-              {passwords.map((password, index) =>
-                <li key={index}>
-                  {password}
-                </li>
-              )}
-            </ul>
-            <button
-              className="more"
-              onClick={this.getPasswords}>
-              Get More
-            </button>
-          </div>
-        ) : (
-          // Render a helpful message otherwise
-          <div>
-            <h1>No passwords :(</h1>
-            <button
-              className="more"
-              onClick={this.getPasswords}>
-              Try Again?
-            </button>
-          </div>
-        )}
-      </div>
+      <div>Initializing Keycloak...</div>
     );
   }
+
 }
 
 export default App;
