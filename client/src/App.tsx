@@ -2,6 +2,7 @@ import React from 'react';
 import { KeycloakOptions } from './keycloak/keycloak-options';
 import { KeycloakService } from './keycloak/keycloak';
 import './App.css';
+import Mission from './mission/mission';
 
 interface MyProps { };
 interface MyState {
@@ -44,11 +45,9 @@ class App extends React.Component<MyProps, MyState> {
         if (this.state.keycloak) {
             if (this.state.authenticated) {
                 return (
-                    <div>
-                        <p>This is a Keycloak-secured component of your application. You shouldn't be able
-            to see this unless you've authenticated with Keycloak.</p>
-            <pre>{JSON.stringify(this.state.keycloak.getUserProfile(), undefined, 2)}</pre>
-                    </div>
+                    <Mission
+                        userProfile={this.state.keycloak.getUserProfile()} >
+                    </Mission>
                 );
             } else {
                 return (<div>Unable to authenticate!</div>);
