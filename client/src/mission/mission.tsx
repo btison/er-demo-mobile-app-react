@@ -12,6 +12,10 @@ interface MyState {
 
 class Mission extends React.Component<MyProps, MyState> {
 
+    static DEFAULT_PHONE_NUMBER = '111-222-333';
+    static DEFAULT_BOAT_CAPACITY = 12;
+    static DEFAULT_MEDICAL_KIT = true;
+
     private responderService = new ResponderService();
 
     constructor(props: MyProps) {
@@ -23,7 +27,7 @@ class Mission extends React.Component<MyProps, MyState> {
         const responderName = `${this.props.userProfile.firstName} ${this.props.userProfile.lastName}`;
         let responder = await this.responderService.getByName(responderName);
         if (responder.id === 0) {
-            // register responder;
+            responder = await this.registerResponder(true);
         }
         this.setState({responder: responder});    
     }
@@ -36,6 +40,38 @@ class Mission extends React.Component<MyProps, MyState> {
             </div>
         );
     };
+
+    async registerResponder(getResponder: boolean): Promise<Responder> {
+        //TODO toast
+        const responder = new Responder();
+        let profile: any = this.props.userProfile;
+        responder.name = `${this.props.userProfile.firstName} ${this.props.userProfile.lastName}`;
+        responder.enrolled = false;
+        responder.person = true;
+        responder.available = true;
+        const attrs: any = profile['attributes'];
+
+        if (attrs) {
+            if (attrs.phoneNumber && attrs.phoneNumber[0]) {
+                responder.phoneNumber = attrs.phoneNumber[0];
+            } else {
+                responder.phoneNumber = Mission.DEFAULT_PHONE_NUMBER;
+            }
+            if (attrs.boatCapacity && attrs.boatCapacity[0]) {
+                // clamp between 2 and 12
+                const boatCapacity = attrs.boatCapacity[0] <= 2 ? 2 : attrs.boatCapacity[0] >= 12 ? 12 : attrs.boatCapacity[0];
+                responder.boatCapacity = boatCapacity;
+            } else {
+                responder.boatCapacity = Mission.DEFAULT_BOAT_CAPACITY;
+            }
+            if (attrs.medical && attrs.medical[0]) {
+                responder.medicalKit = attrs.medical[0];
+            } else {
+                responder.medicalKit = Mission.DEFAULT_MEDICAL_KIT;
+            }
+        }
+        return this.responderService.create(responder, getResponder);
+    }
 
 }
 
