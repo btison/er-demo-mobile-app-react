@@ -70,8 +70,8 @@ class App extends React.Component<MyProps, MyState> {
                         <IonRouterOutlet>
                           <Route exact path="/mission">
                             <Mission
-                              userProfile={this.state.keycloak.getUserProfile()} >
-                            </Mission>
+                              userProfile={this.state.keycloak.getUserProfile()}
+                            />
                           </Route>
                           <Route exact path="/">
                             <Redirect to="/mission" />
@@ -90,7 +90,7 @@ class App extends React.Component<MyProps, MyState> {
         }
         return (
             <IonApp>
-              <div>Initializing Keycloak...</div>
+              <div>Initializing...</div>
             </IonApp>
         );
     }
