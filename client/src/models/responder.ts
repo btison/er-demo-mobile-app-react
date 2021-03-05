@@ -1,5 +1,5 @@
 export class Responder {
-    id = 0;
+    id = "0";
     name?: string;
     phoneNumber?: string;
     latitude?: number;

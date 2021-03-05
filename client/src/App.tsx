@@ -1,8 +1,30 @@
 import React from 'react';
+import { Redirect, Route } from 'react-router-dom';
+import { IonApp, IonRouterOutlet } from '@ionic/react';
+import { IonReactRouter } from '@ionic/react-router';
 import { KeycloakOptions } from './keycloak/keycloak-options';
 import { KeycloakService } from './keycloak/keycloak';
 import './App.css';
 import Mission from './mission/mission';
+
+/* Core CSS required for Ionic components to work properly */
+import '@ionic/react/css/core.css';
+
+/* Basic CSS for apps built with Ionic */
+import '@ionic/react/css/normalize.css';
+import '@ionic/react/css/structure.css';
+import '@ionic/react/css/typography.css';
+
+/* Optional CSS utils that can be commented out */
+import '@ionic/react/css/padding.css';
+import '@ionic/react/css/float-elements.css';
+import '@ionic/react/css/text-alignment.css';
+import '@ionic/react/css/text-transformation.css';
+import '@ionic/react/css/flex-utils.css';
+import '@ionic/react/css/display.css';
+
+/* Theme variables */
+import './theme/variables.css';
 
 interface MyProps { };
 interface MyState {
@@ -17,7 +39,7 @@ class App extends React.Component<MyProps, MyState> {
         this.state = { keycloak: null, authenticated: false };
     }
 
-    async componentWillMount() {
+    async componentDidMount() {
         const url = (window as any)['_env'].url;
         const realm = (window as any)['_env'].realm;
         const clientId = (window as any)['_env'].clientId;
@@ -28,7 +50,8 @@ class App extends React.Component<MyProps, MyState> {
                 clientId: clientId
             },
             initOptions: {
-                onLoad: 'login-required'
+                onLoad: 'login-required',
+                checkLoginIframe: false
             },
             loadUserProfileAtStartUp: true
         }
@@ -38,23 +61,37 @@ class App extends React.Component<MyProps, MyState> {
         this.setState({ keycloak: keycloak, authenticated: authenticated })
     }
 
-    async componentDidMount() {
-    }
-
     render() {
         if (this.state.keycloak) {
             if (this.state.authenticated) {
                 return (
-                    <Mission
-                        userProfile={this.state.keycloak.getUserProfile()} >
-                    </Mission>
+                    <IonApp>
+                      <IonReactRouter>
+                        <IonRouterOutlet>
+                          <Route exact path="/mission">
+                            <Mission
+                              userProfile={this.state.keycloak.getUserProfile()} >
+                            </Mission>
+                          </Route>
+                          <Route exact path="/">
+                            <Redirect to="/mission" />
+                          </Route>
+                        </IonRouterOutlet>
+                      </IonReactRouter>
+                    </IonApp>
                 );
             } else {
-                return (<div>Unable to authenticate!</div>);
+                return (
+                  <IonApp>  
+                    <div>Unable to authenticate!</div>
+                  </IonApp>
+                );
             }
         }
         return (
-            <div>Initializing Keycloak...</div>
+            <IonApp>
+              <div>Initializing Keycloak...</div>
+            </IonApp>
         );
     }
 
