@@ -22,14 +22,22 @@ const Mission = (props: MyProps) => {
 
         const getResponder = async (): Promise<Responder> => {
             const responderName = `${props.userProfile.firstName} ${props.userProfile.lastName}`;
-            let responder = await responderService.getByName(responderName);
-            if (responder.id === "0") {
-                setToast(MessageService.info('Registering as new responder'));
-                responder = await registerResponder(true);
+            try {
+                let responder = await responderService.getByName(responderName);
+                if (responder.id === "0") {
+                    setToast(MessageService.info('Registering as new responder'));
+                    responder = await registerResponder(true);
+                }
+                return Promise.resolve(responder);
+            } catch (e) {
+                if (e instanceof Error) {
+                    setToast(new Toast());
+                    setToast(MessageService.error(e.message));
+                    return Promise.resolve(new Responder());                    
+                } else {
+                    throw e;
+                }
             }
-            return new Promise((resolve) => {
-                resolve(responder);
-            });
         }
 
         const registerResponder = async (getResponder: boolean): Promise<Responder> => {

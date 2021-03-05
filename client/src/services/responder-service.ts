@@ -14,7 +14,7 @@ export class ResponderService {
                 }
                 return response.data;
             })
-            .catch(ex => this.handleError('getResponder()', ex));
+            .catch(ex => this.handleError('Error retrieving responder by name', ex));
     }
 
     async getById(id: string): Promise<Responder> {
@@ -28,7 +28,7 @@ export class ResponderService {
                 }
                 return response.data;
             })
-            .catch(ex => this.handleError('getResponder()', ex));
+            .catch(ex => this.handleError('Error retrieving responder by id', ex));
     }
 
     async create(responder: Responder, get: boolean): Promise<Responder> {
@@ -45,15 +45,12 @@ export class ResponderService {
                 }
                 return new Responder();
             })
-            .catch(ex => this.handleError('getResponder()', ex));
+            .catch(ex => this.handleError('Error creating responder', ex));
     }
 
-    private handleError(method: string, error: AxiosError): Promise<any> {
-        console.error(`${method} ${error.message}`);
-        //TODO: toast
-        return new Promise((resolve) => {
-            resolve(null);
-        })
+    private handleError(message: string, error: AxiosError): Promise<any> {
+        console.error(`${message} ${error.message}`);
+        throw new Error(message)
     }
 
 }
