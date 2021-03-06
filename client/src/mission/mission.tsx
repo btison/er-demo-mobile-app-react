@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonToast } from '@ionic/react';
 import { Responder } from '../models/responder';
+import { Location } from '../models/location';
 import { ResponderService } from '../services/responder-service';
+import { DisasterSimulatorService } from '../services/disaster-simulator-service';
 import { MessageService, Toast } from '../services/message-service'
 
 interface MyProps {
@@ -19,6 +21,7 @@ const Mission = (props: MyProps) => {
         const DEFAULT_MEDICAL_KIT = true;
 
         const responderService = new ResponderService();
+        const disasterSimulatorService = new DisasterSimulatorService();
 
         const getResponder = async (): Promise<Responder> => {
             const responderName = `${props.userProfile.firstName} ${props.userProfile.lastName}`;
@@ -71,7 +74,33 @@ const Mission = (props: MyProps) => {
             return responderService.create(responder, getResponder);
         }
 
-        getResponder().then(setResponder);
+        const generateLocation = async (): Promise<Location | null> => {
+            try {
+                return disasterSimulatorService.generateLocation();
+            } catch (e) {
+                if (e instanceof Error) {
+                    setToast(new Toast());
+                    setToast(MessageService.error(e.message));
+                    return Promise.resolve(null);                    
+                } else {
+                    throw e;
+                }                
+            }
+        }
+
+        getResponder().then((responder) => {
+            if (responder.latitude == null || responder.latitude === 0) {
+                generateLocation().then((location) => {
+                    if (location) {
+                        responder.latitude = location.latitude;
+                        responder.longitude = location.longitude;
+                    }
+                    setResponder(responder);
+                });
+            } else {
+                setResponder(responder);
+            }
+        });
 
     }, [props.userProfile]);
 

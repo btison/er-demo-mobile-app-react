@@ -9,6 +9,7 @@ const app = express(); // create express app
 
 app.set('port', process.env.PORT || 8080);
 app.set('responder-service', process.env.RESPONDER_SERVICE);
+app.set('disaster-simulator', process.env.DISASTER_SIMULATOR);
 
 app.use(express.static(path.join(__dirname, 'client/build')));
 
@@ -21,6 +22,19 @@ app.use(
         logLevel: 'debug',
         pathRewrite: {
             '^/responder-service': ''
+        }
+    })
+);
+
+app.use(
+    '/disaster-simulator-service/*',
+    createProxyMiddleware({
+        target: app.get('disaster-simulator'),
+        secure: false,
+        changeOrigin: true,
+        logLevel: 'debug',
+        pathRewrite: {
+            '^/disaster-simulator-service': ''
         }
     })
 );
