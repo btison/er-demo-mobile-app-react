@@ -6,4 +6,5 @@
     window._env.realm = '';
     window._env.clientId = '';
     window._env.enabled = '';
+    window._env.accessToken = '';
   })(this);

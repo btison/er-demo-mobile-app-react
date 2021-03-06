@@ -8,6 +8,7 @@ doReplace('url', process.env.AUTH_URL);
 doReplace('enabled', process.env.KEYCLOAK);
 doReplace('realm', process.env.REALM);
 doReplace('clientId', process.env.CLIENTID);
+doReplace('accessToken', process.env.TOKEN);
 
 function doReplace(key, value) {
   const regex = key + ' = \'.*\'';

@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonToast } from '@ionic/react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonToast, IonButton, IonCard, IonCardContent } from '@ionic/react';
+import mapboxgl from 'mapbox-gl';
 import { Responder } from '../models/responder';
 import { Location } from '../models/location';
 import { DisasterCenter } from '../models/disaster-center';
@@ -9,16 +10,28 @@ import { DisasterSimulatorService } from '../services/disaster-simulator-service
 import { MessageService, Toast } from '../services/message-service'
 import { DisasterService } from '../services/disaster-service';
 
+import './mission.css';
+
 interface MyProps {
     userProfile: Keycloak.KeycloakProfile
 }
 
 const Mission = (props: MyProps) => {
 
+    const BUTTON_AVAILABLE = 'available';
+    const BUTTON_PICKED_UP = 'picked up';
+
+    const DEFAULT_CENTER = useMemo(() => new DisasterCenter('default', 34.158808, -77.886765, 10.5), []);
+
     const [responder, setResponder] = useState<Responder>(new Responder());
     const [toast, setToast] = useState<Toast>(new Toast());
-    const [center, setCenter] = useState<DisasterCenter | null>(null);
+    const [center, setCenter] = useState<DisasterCenter>(DEFAULT_CENTER);
     const [shelters, setShelters] = useState<Shelter[]>([]);
+    const [button, setButton] = useState<String>('available');
+
+    const mapContainerRef = useRef<HTMLDivElement>(null);
+
+    mapboxgl.accessToken = (window as any)['_env'].accessToken;
 
     useEffect(() => {
         const DEFAULT_PHONE_NUMBER = '111-222-333';
@@ -94,14 +107,14 @@ const Mission = (props: MyProps) => {
             }
         };
 
-        const getDisasterCenter = async (): Promise<DisasterCenter | null> => {
+        const getDisasterCenter = async (): Promise<DisasterCenter> => {
             try {
                 return disasterService.getDisasterCenter();
             } catch (e) {
                 if (e instanceof Error) {
                     setToast(new Toast());
                     setToast(MessageService.error(e.message));
-                    return Promise.resolve(null);
+                    return Promise.resolve(DEFAULT_CENTER);
                 } else {
                     throw e;
                 }
@@ -122,7 +135,22 @@ const Mission = (props: MyProps) => {
             }            
         };
 
-        getDisasterCenter().then((center) => setCenter(center));
+        let map: mapboxgl.Map;
+
+        const createMap = (lat: number, lon: number, zoom: number): mapboxgl.Map => {
+            const m = new mapboxgl.Map({
+                container: mapContainerRef.current || '',
+                style: 'mapbox://styles/mapbox/streets-v11',
+                center: [lon, lat],
+                zoom: zoom,
+              });
+            return m;         
+        }
+
+        getDisasterCenter().then((center) => {
+            setCenter(center);
+            map = createMap(center.lat, center.lon, center.zoom);
+        });
         getShelters().then((shelters) => setShelters(shelters));
         getResponder().then((responder) => {
             if (responder.latitude == null || responder.latitude === 0) {
@@ -137,8 +165,15 @@ const Mission = (props: MyProps) => {
                 setResponder(responder);
             }
         });
+        return () => map.remove();
+    }, [props.userProfile, DEFAULT_CENTER]);
 
-    }, [props.userProfile]);
+    const buttonDisabled = (): boolean => {
+        if (button === BUTTON_AVAILABLE) {
+            return (responder.latitude === null || responder.latitude === 0)
+        }
+        return false;
+    } 
 
     return (
         <IonPage>
@@ -148,13 +183,16 @@ const Mission = (props: MyProps) => {
                 </IonToolbar>
             </IonHeader>
             <IonContent fullscreen>
-                <div className="container">
-                    <pre>{JSON.stringify(props.userProfile, undefined, 2)}</pre>
-                    <pre>{JSON.stringify(responder, undefined, 2)}</pre>
-                    <pre>{JSON.stringify(center, undefined, 2)}</pre>
-                    <pre>{JSON.stringify(shelters, undefined, 2)}</pre>
-                </div>
+                <div className="map-container" ref={mapContainerRef} />
             </IonContent>
+            <IonButton
+                    expand="block"
+                    color="primary"
+                    fill="solid"
+                    disabled={buttonDisabled()}
+                >
+                    {button}
+            </IonButton>
             <IonToast
                 isOpen={toast.open}
                 onDidDismiss={() => setToast(new Toast())}
