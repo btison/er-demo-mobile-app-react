@@ -29,8 +29,11 @@ const Mission = (props: MyProps) => {
     const [button, setButton] = useState<String>('available');
     const [viewport, setViewport] = useState<WebMercatorViewport>(new WebMercatorViewport({ width: 0, height: 0, latitude: DEFAULT_CENTER.lat, longitude: DEFAULT_CENTER.lon, zoom: DEFAULT_CENTER.zoom }));
     const [responderLocation, setResponderLocation] = useState<Location>(Location.of(0,0));
+    const [waitingOnMission, setWaitingOnMission] = useState<boolean>(false);
 
     const accessToken = (window as any)['_env'].accessToken;
+
+    const responderService = new ResponderService();
 
     useEffect(() => {
         const DEFAULT_PHONE_NUMBER = '111-222-333';
@@ -150,15 +153,31 @@ const Mission = (props: MyProps) => {
                 });
             } else {
                 setResponder(responder);
+                setResponderLocation(Location.of(responder.latitude as number, responder.longitude as number));
             }
         });
     }, [props.userProfile, DEFAULT_CENTER]);
 
     const buttonDisabled = (): boolean => {
         if (button === BUTTON_AVAILABLE) {
-            return (responder.latitude === undefined || responder.latitude === null || responder.latitude === 0)
+            return (responderLocation.latitude === 0 || waitingOnMission || (responder.available === true && responder.enrolled === true))
         }
         return false;
+    }
+
+    const buttonClicked = () => {
+        if (button === BUTTON_AVAILABLE) {
+            responder.enrolled = true;
+            responder.available = true;
+            responder.latitude = responderLocation.latitude;
+            responder.longitude = responderLocation.longitude;
+            responderService.update(responder)
+                .then(() => {
+                    setWaitingOnMission(true);
+                    setToast(new Toast());
+                    setToast(MessageService.info('Waiting to receive a rescue mission'));
+                });
+        }
     }
 
     const shelterMarkers = useMemo(() =>
@@ -212,6 +231,7 @@ const Mission = (props: MyProps) => {
                 color="primary"
                 fill="solid"
                 disabled={buttonDisabled()}
+                onClick={ () => buttonClicked() }
             >
                 {button}
             </IonButton>

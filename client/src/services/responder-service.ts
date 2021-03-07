@@ -48,6 +48,12 @@ export class ResponderService {
             .catch(ex => this.handleError('Error creating responder', ex));
     }
 
+    async update(responder: Responder): Promise<void> {
+        const url = 'responder-service/responder';
+        axios.put(url, responder)
+            .catch(ex => this.handleError('Error creating responder', ex));
+    }
+
     private handleError(message: string, error: AxiosError): Promise<any> {
         console.error(`${message} ${error.message}`);
         throw new Error(message)
