@@ -5,7 +5,7 @@
     left: 0;
     right: 0;
 }
-.marker, .shelter {
+.marker, .shelter, .responderMarker {
     background-size: cover;
     width: 2.5em;
     height: 2.5em;
@@ -13,6 +13,12 @@
     cursor: pointer;
 }
 .shelter {
+    background-size: contain;
+    width: 1.5em;
+    height: 1.5em;
+}
+
+.responderMarker {
     background-size: contain;
     width: 1.5em;
     height: 1.5em;

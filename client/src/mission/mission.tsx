@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, ReactElement } from 'react';
 import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonToast, IonButton } from '@ionic/react';
 import ReactMapGL, { WebMercatorViewport, Marker } from 'react-map-gl';
 import { Responder } from '../models/responder';
@@ -28,6 +28,7 @@ const Mission = (props: MyProps) => {
     const [shelters, setShelters] = useState<Shelter[]>([]);
     const [button, setButton] = useState<String>('available');
     const [viewport, setViewport] = useState<WebMercatorViewport>(new WebMercatorViewport({ width: 0, height: 0, latitude: DEFAULT_CENTER.lat, longitude: DEFAULT_CENTER.lon, zoom: DEFAULT_CENTER.zoom }));
+    const [responderLocation, setResponderLocation] = useState<Location>(Location.of(0,0));
 
     const accessToken = (window as any)['_env'].accessToken;
 
@@ -143,6 +144,7 @@ const Mission = (props: MyProps) => {
                     if (location) {
                         responder.latitude = location.latitude;
                         responder.longitude = location.longitude;
+                        setResponderLocation(location);
                     }
                     setResponder(responder);
                 });
@@ -154,7 +156,7 @@ const Mission = (props: MyProps) => {
 
     const buttonDisabled = (): boolean => {
         if (button === BUTTON_AVAILABLE) {
-            return (responder.latitude === null || responder.latitude === 0)
+            return (responder.latitude === undefined || responder.latitude === null || responder.latitude === 0)
         }
         return false;
     }
@@ -169,6 +171,19 @@ const Mission = (props: MyProps) => {
             </Marker>
         )
         ), [shelters]);
+
+    const responderMarker = (): any => {
+        if (!(responderLocation.latitude === 0)) {
+            return (
+            <Marker
+                latitude={responderLocation.latitude as number}
+                longitude={responderLocation.longitude as number}
+            >
+            <div className="responderMarker" style={{ backgroundImage: 'url(/assets/img/circle-responder-boat-colored.svg)' }}></div>
+            </Marker>
+            )
+        }
+    }
 
     return (
         <IonPage>
@@ -189,6 +204,7 @@ const Mission = (props: MyProps) => {
                     onViewportChange={(viewport: WebMercatorViewport) => setViewport(viewport)}
                 >
                     {shelterMarkers}
+                    {responderMarker()}
                 </ReactMapGL>
             </IonContent>
             <IonButton
