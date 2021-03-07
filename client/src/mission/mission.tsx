@@ -159,19 +159,16 @@ const Mission = (props: MyProps) => {
         return false;
     }
 
-    const shelterMarkers = (): any => {
-        console.log('shelters ' + shelters)
-        shelters.map((shelter) => {
-            return (
-                <Marker
-                    latitude={shelter.lat}
-                    longitude={shelter.lon}
-                >
-                    <div className="shelter" style={{ backgroundImage: 'url(/assets/img/circle-shelter-hospital-colored.svg)' }}>Shelter</div>
-                </Marker>
-            );
-        });
-    }
+    const shelterMarkers = useMemo(() =>
+        shelters.map((shelter) => (
+            <Marker
+                latitude={shelter.lat}
+                longitude={shelter.lon}
+            >
+                <div className="shelter" style={{ backgroundImage: 'url(/assets/img/circle-shelter-hospital-colored.svg)' }}></div>
+            </Marker>
+        )
+        ), [shelters]);
 
     return (
         <IonPage>
@@ -191,17 +188,7 @@ const Mission = (props: MyProps) => {
                     height='100vh'
                     onViewportChange={(viewport: WebMercatorViewport) => setViewport(viewport)}
                 >
-                    {shelters.map(shelter => {
-                        return (
-                            <Marker
-                                latitude={shelter.lat}
-                                longitude={shelter.lon}
-                            >
-                                <div className="shelter" style={{ backgroundImage: 'url(/assets/img/circle-shelter-hospital-colored.svg)' }}></div>
-                            </Marker>
-                        )
-                    })
-                    }
+                    {shelterMarkers}
                 </ReactMapGL>
             </IonContent>
             <IonButton
