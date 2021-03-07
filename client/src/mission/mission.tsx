@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonToast, IonButton, IonCard, IonCardContent } from '@ionic/react';
-import mapboxgl from 'mapbox-gl';
+import React, { useEffect, useState, useMemo } from 'react';
+import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonToast, IonButton } from '@ionic/react';
+import ReactMapGL, { WebMercatorViewport, Marker } from 'react-map-gl';
 import { Responder } from '../models/responder';
 import { Location } from '../models/location';
 import { DisasterCenter } from '../models/disaster-center';
@@ -25,13 +25,11 @@ const Mission = (props: MyProps) => {
 
     const [responder, setResponder] = useState<Responder>(new Responder());
     const [toast, setToast] = useState<Toast>(new Toast());
-    const [center, setCenter] = useState<DisasterCenter>(DEFAULT_CENTER);
     const [shelters, setShelters] = useState<Shelter[]>([]);
     const [button, setButton] = useState<String>('available');
+    const [viewport, setViewport] = useState<WebMercatorViewport>(new WebMercatorViewport({ width: 0, height: 0, latitude: DEFAULT_CENTER.lat, longitude: DEFAULT_CENTER.lon, zoom: DEFAULT_CENTER.zoom }));
 
-    const mapContainerRef = useRef<HTMLDivElement>(null);
-
-    mapboxgl.accessToken = (window as any)['_env'].accessToken;
+    const accessToken = (window as any)['_env'].accessToken;
 
     useEffect(() => {
         const DEFAULT_PHONE_NUMBER = '111-222-333';
@@ -55,7 +53,7 @@ const Mission = (props: MyProps) => {
                 if (e instanceof Error) {
                     setToast(new Toast());
                     setToast(MessageService.error(e.message));
-                    return Promise.resolve(new Responder());                    
+                    return Promise.resolve(new Responder());
                 } else {
                     throw e;
                 }
@@ -100,10 +98,10 @@ const Mission = (props: MyProps) => {
                 if (e instanceof Error) {
                     setToast(new Toast());
                     setToast(MessageService.error(e.message));
-                    return Promise.resolve(null);                    
+                    return Promise.resolve(null);
                 } else {
                     throw e;
-                }                
+                }
             }
         };
 
@@ -132,24 +130,11 @@ const Mission = (props: MyProps) => {
                 } else {
                     throw e;
                 }
-            }            
+            }
         };
 
-        let map: mapboxgl.Map;
-
-        const createMap = (lat: number, lon: number, zoom: number): mapboxgl.Map => {
-            const m = new mapboxgl.Map({
-                container: mapContainerRef.current || '',
-                style: 'mapbox://styles/mapbox/streets-v11',
-                center: [lon, lat],
-                zoom: zoom,
-              });
-            return m;         
-        }
-
         getDisasterCenter().then((center) => {
-            setCenter(center);
-            map = createMap(center.lat, center.lon, center.zoom);
+            setViewport(new WebMercatorViewport({ width: 0, height: 0, latitude: center.lat, longitude: center.lon, zoom: center.zoom }));
         });
         getShelters().then((shelters) => setShelters(shelters));
         getResponder().then((responder) => {
@@ -165,7 +150,6 @@ const Mission = (props: MyProps) => {
                 setResponder(responder);
             }
         });
-        return () => map.remove();
     }, [props.userProfile, DEFAULT_CENTER]);
 
     const buttonDisabled = (): boolean => {
@@ -173,7 +157,7 @@ const Mission = (props: MyProps) => {
             return (responder.latitude === null || responder.latitude === 0)
         }
         return false;
-    } 
+    }
 
     return (
         <IonPage>
@@ -183,15 +167,25 @@ const Mission = (props: MyProps) => {
                 </IonToolbar>
             </IonHeader>
             <IonContent fullscreen>
-                <div className="map-container" ref={mapContainerRef} />
+                <ReactMapGL
+                    mapboxApiAccessToken={accessToken}
+                    mapStyle="mapbox://styles/mapbox/streets-v11"
+                    latitude={viewport.latitude}
+                    longitude={viewport.longitude}
+                    zoom={viewport.zoom}
+                    width='100vw'
+                    height='100vh'
+                    onViewportChange={(viewport: WebMercatorViewport) => setViewport(viewport)}
+                >
+                </ReactMapGL>
             </IonContent>
             <IonButton
-                    expand="block"
-                    color="primary"
-                    fill="solid"
-                    disabled={buttonDisabled()}
-                >
-                    {button}
+                expand="block"
+                color="primary"
+                fill="solid"
+                disabled={buttonDisabled()}
+            >
+                {button}
             </IonButton>
             <IonToast
                 isOpen={toast.open}
