@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import { Kafka, logLevel } from 'kafkajs';
+import { KafkaMessage } from './cloudevents';
 
 const app = express();
 
@@ -85,7 +86,9 @@ const run = async () => {
     await consumer.run({
         eachMessage: async ({ topic, partition, message }) => {
             try {
-                console.log(message);
+                const event = KafkaMessage.toEvent({ headers: message.headers!, body: message.value });
+                console.log(event);
+                console.log(event.data);
             } catch (err) {
                 console.error(`Error when transforming incoming message to CloudEvent. ${err.message}`, err);
                 console.error('    Topic: ', topic);
