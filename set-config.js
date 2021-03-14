@@ -17,6 +17,6 @@ function doReplace(key, value) {
   replace({
     regex: regex,
     replacement: replacement,
-    paths: [`${__dirname}/client/build/assets/js/env.js`]
+    paths: [`${__dirname}/dist/client/build/assets/js/env.js`]
   });
 }

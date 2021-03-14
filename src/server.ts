@@ -1,16 +1,20 @@
-'use strict'
+import express from 'express';
+import path from 'path';
+import { createProxyMiddleware } from 'http-proxy-middleware';
 
-const express = require("express");
-const path = require("path");
-const { createProxyMiddleware } = require('http-proxy-middleware');
-const generatePassword = require('password-generator');
-
-const app = express(); // create express app
+const app = express();
 
 app.set('port', process.env.PORT || 8080);
 app.set('responder-service', process.env.RESPONDER_SERVICE);
 app.set('disaster-simulator', process.env.DISASTER_SIMULATOR);
 app.set('disaster-service', process.env.DISASTER_SERVICE);
+if (process.env.KAFKA_HOST) {
+    app.set('kafka-host', process.env.KAFKA_HOST.split(','));
+}
+app.set('kafka-groupid', process.env.KAFKA_GROUP_ID || 'emergency-response-app');
+if (process.env.KAFKA_TOPIC) {
+    app.set('kafka-message-topic', process.env.KAFKA_TOPIC.split(','));
+}
 
 app.use(express.static(path.join(__dirname, 'client/build')));
 
