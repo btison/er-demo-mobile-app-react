@@ -1,14 +1,17 @@
-import React, { useEffect, useState, useMemo, ReactElement } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonToast, IonButton } from '@ionic/react';
 import ReactMapGL, { WebMercatorViewport, Marker } from 'react-map-gl';
 import { Responder } from '../models/responder';
 import { Location } from '../models/location';
 import { DisasterCenter } from '../models/disaster-center';
 import { Shelter } from '../models/shelter';
+import { Mission } from '../models/mission';
 import { ResponderService } from '../services/responder-service';
 import { DisasterSimulatorService } from '../services/disaster-simulator-service';
+import { MissionService } from '../services/mission-service';
 import { MessageService, Toast } from '../services/message-service'
 import { DisasterService } from '../services/disaster-service';
+import { IntervalHookResult, useInterval } from "react-interval-hook";
 
 import './mission.css';
 
@@ -16,7 +19,7 @@ interface MyProps {
     userProfile: Keycloak.KeycloakProfile
 }
 
-const Mission = (props: MyProps) => {
+const MissionComponent = (props: MyProps) => {
 
     const BUTTON_AVAILABLE = 'available';
     const BUTTON_PICKED_UP = 'picked up';
@@ -28,12 +31,14 @@ const Mission = (props: MyProps) => {
     const [shelters, setShelters] = useState<Shelter[]>([]);
     const [button, setButton] = useState<String>('available');
     const [viewport, setViewport] = useState<WebMercatorViewport>(new WebMercatorViewport({ width: 0, height: 0, latitude: DEFAULT_CENTER.lat, longitude: DEFAULT_CENTER.lon, zoom: DEFAULT_CENTER.zoom }));
-    const [responderLocation, setResponderLocation] = useState<Location>(Location.of(0,0));
+    const [responderLocation, setResponderLocation] = useState<Location>(Location.of(0, 0));
     const [waitingOnMission, setWaitingOnMission] = useState<boolean>(false);
+    const [mission, setMission] = useState<Mission | null>(null);
 
     const accessToken = (window as any)['_env'].accessToken;
 
     const responderService = new ResponderService();
+    const missionService = new MissionService();
 
     useEffect(() => {
         const DEFAULT_PHONE_NUMBER = '111-222-333';
@@ -173,11 +178,29 @@ const Mission = (props: MyProps) => {
             responder.longitude = responderLocation.longitude;
             responderService.update(responder)
                 .then(() => {
-                    setWaitingOnMission(true);
-                    setToast(new Toast());
-                    setToast(MessageService.info('Waiting to receive a rescue mission'));
+                    waitOnMission();
                 });
         }
+    }
+
+    const getMissionInterval: IntervalHookResult = useInterval(() => {
+        console.log('calling mission service');
+        missionService.get(responder.id).then((mission) => {
+            if (mission !== null) {
+                setMission(mission);
+                setWaitingOnMission(false);
+                setToast(new Toast());
+                setToast(MessageService.success('You have been assigned a mission'));
+                getMissionInterval.stop();
+            }
+        });
+    }, 2000, { autoStart: false });
+
+    const waitOnMission = () => {
+        setWaitingOnMission(true);
+        setToast(new Toast());
+        setToast(MessageService.info('Waiting to receive a rescue mission'));
+        getMissionInterval.start();
     }
 
     const shelterMarkers = useMemo(() =>
@@ -194,12 +217,12 @@ const Mission = (props: MyProps) => {
     const responderMarker = (): any => {
         if (!(responderLocation.latitude === 0)) {
             return (
-            <Marker
-                latitude={responderLocation.latitude as number}
-                longitude={responderLocation.longitude as number}
-            >
-            <div className="responderMarker" style={{ backgroundImage: 'url(/assets/img/circle-responder-boat-colored.svg)' }}></div>
-            </Marker>
+                <Marker
+                    latitude={responderLocation.latitude as number}
+                    longitude={responderLocation.longitude as number}
+                >
+                    <div className="responderMarker" style={{ backgroundImage: 'url(/assets/img/circle-responder-boat-colored.svg)' }}></div>
+                </Marker>
             )
         }
     }
@@ -231,7 +254,7 @@ const Mission = (props: MyProps) => {
                 color="primary"
                 fill="solid"
                 disabled={buttonDisabled()}
-                onClick={ () => buttonClicked() }
+                onClick={() => buttonClicked()}
             >
                 {button}
             </IonButton>
@@ -247,4 +270,4 @@ const Mission = (props: MyProps) => {
     );
 }
 
-export default Mission;
+export default MissionComponent;

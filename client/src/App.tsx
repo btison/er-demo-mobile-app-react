@@ -5,7 +5,7 @@ import { IonReactRouter } from '@ionic/react-router';
 import { KeycloakOptions } from './keycloak/keycloak-options';
 import { KeycloakService } from './keycloak/keycloak';
 import './App.css';
-import Mission from './mission/mission';
+import MissionComponent from './mission/mission';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -69,7 +69,7 @@ class App extends React.Component<MyProps, MyState> {
                       <IonReactRouter>
                         <IonRouterOutlet>
                           <Route exact path="/mission">
-                            <Mission
+                            <MissionComponent
                               userProfile={this.state.keycloak.getUserProfile()}
                             />
                           </Route>
