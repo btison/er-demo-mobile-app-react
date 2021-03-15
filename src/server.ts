@@ -62,6 +62,15 @@ app.use(
     })
 );
 
+app.get('/mission-service/mission/:id', (req, res) => {
+    let mission: Mission| null = MissionService.get(req.params.id);
+    if (mission === null) {
+        res.status(404).send('Mission not found');
+    } else {
+        res.status(200).json(mission)
+    }
+});
+
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname + '/client/build/index.html'));
 });
