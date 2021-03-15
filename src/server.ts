@@ -3,6 +3,9 @@ import path from 'path';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import { Kafka, logLevel } from 'kafkajs';
 import { KafkaMessage } from './cloudevents';
+import { ResponderService } from './services/responder-service';
+import { MissionService } from './services/mission-service';
+import { Mission } from './services/mission-service/mission-service';
 
 const app = express();
 
@@ -87,8 +90,16 @@ const run = async () => {
         eachMessage: async ({ topic, partition, message }) => {
             try {
                 const event = KafkaMessage.toEvent({ headers: message.headers!, body: message.value });
-                console.log(event);
-                console.log(event.data);
+                if (event.type === 'MissionStartedEvent') {
+                    let mission: Mission = event.data as Mission;
+                    let responderId = mission.responderId as string;
+                    ResponderService.isPerson(responderId).then((bool) => {
+                        if (bool) {
+                            console.log(`Responder with id ${responderId} is a person`);
+                            MissionService.put(mission);
+                        }
+                    });
+                }
             } catch (err) {
                 console.error(`Error when transforming incoming message to CloudEvent. ${err.message}`, err);
                 console.error('    Topic: ', topic);
