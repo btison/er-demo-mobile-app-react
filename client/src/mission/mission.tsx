@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonToast, IonButton } from '@ionic/react';
+import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonToast, IonButton, IonSpinner } from '@ionic/react';
 import ReactMapGL, { WebMercatorViewport, Marker } from 'react-map-gl';
 import { Responder } from '../models/responder';
 import { Location } from '../models/location';
@@ -257,6 +257,8 @@ const MissionComponent = (props: MyProps) => {
                 onClick={() => buttonClicked()}
             >
                 {button}
+                {waitingOnMission &&
+                    <IonSpinner name="crescent" />}
             </IonButton>
             <IonToast
                 isOpen={toast.open}
