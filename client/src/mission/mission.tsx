@@ -5,13 +5,14 @@ import { Responder } from '../models/responder';
 import { Location } from '../models/location';
 import { DisasterCenter } from '../models/disaster-center';
 import { Shelter } from '../models/shelter';
-import { Mission } from '../models/mission';
+import { Mission, ResponderLocation } from '../models/mission';
 import { ResponderService } from '../services/responder-service';
 import { DisasterSimulatorService } from '../services/disaster-simulator-service';
 import { MissionService } from '../services/mission-service';
 import { MessageService, Toast } from '../services/message-service'
 import { DisasterService } from '../services/disaster-service';
 import { IntervalHookResult, useInterval } from "react-interval-hook";
+import { Utils } from "../utils";
 
 import './mission.css';
 
@@ -153,8 +154,8 @@ const MissionComponent = (props: MyProps) => {
             if (responder.latitude == null || responder.latitude === 0) {
                 generateLocation().then((location) => {
                     if (location) {
-                        responder.latitude = location.latitude;
-                        responder.longitude = location.longitude;
+                        responder.latitude = location.lat;
+                        responder.longitude = location.lon;
                         setResponderLocation(location);
                     }
                     setResponder(responder);
@@ -168,7 +169,7 @@ const MissionComponent = (props: MyProps) => {
 
     const buttonDisabled = (): boolean => {
         if (button === BUTTON_AVAILABLE) {
-            return (responderLocation.latitude === 0 || waitingOnMission || (responder.available === true && responder.enrolled === true))
+            return (responderLocation.lat === 0 || waitingOnMission || (responder.available === true && responder.enrolled === true))
         }
         return false;
     }
@@ -177,8 +178,8 @@ const MissionComponent = (props: MyProps) => {
         if (button === BUTTON_AVAILABLE) {
             responder.enrolled = true;
             responder.available = true;
-            responder.latitude = responderLocation.latitude;
-            responder.longitude = responderLocation.longitude;
+            responder.latitude = responderLocation.lat;
+            responder.longitude = responderLocation.lon;
             responderService.update(responder)
                 .then(() => {
                     waitOnMission();
@@ -187,17 +188,31 @@ const MissionComponent = (props: MyProps) => {
     }
 
     const getMissionInterval: IntervalHookResult = useInterval(() => {
-        console.log('calling mission service');
         missionService.get(responder.id).then((mission) => {
             if (mission !== null) {
+                mission.responderLocation.distanceUnit = responder.distanceUnit!;
                 setMission(mission);
                 setWaitingOnMission(false);
                 setToast(new Toast());
                 setToast(MessageService.success('You have been assigned a mission'));
                 getMissionInterval.stop();
+                simulateResponderInterval.start();
             }
         });
     }, 2000, { autoStart: false });
+
+    const simulateResponderInterval: IntervalHookResult = useInterval(() => {
+        ResponderLocation.nextLocation(mission!.responderLocation);
+        ResponderLocation.moveToNextLocation(mission!.responderLocation);
+        if (mission?.responderLocation.status === 'WAITING') {
+            mission.responderLocation.status = 'PICKEDUP';
+            mission.responderLocation.waiting = false;
+        }
+        if (mission?.responderLocation.status === 'DROPPED') {
+            simulateResponderInterval.stop();
+        }
+        setResponderLocation(Location.of(mission!.responderLocation.currentLocation.lat, mission!.responderLocation.currentLocation.lon));
+    }, props.simulationDelay, { autoStart: false });
 
     const waitOnMission = () => {
         setWaitingOnMission(true);
@@ -218,11 +233,11 @@ const MissionComponent = (props: MyProps) => {
         ), [shelters]);
 
     const responderMarker = (): any => {
-        if (!(responderLocation.latitude === 0)) {
+        if (!(responderLocation.lat === 0)) {
             return (
                 <Marker
-                    latitude={responderLocation.latitude as number}
-                    longitude={responderLocation.longitude as number}
+                    latitude={responderLocation.lat}
+                    longitude={responderLocation.lon}
                 >
                     <div className="responderMarker" style={{ backgroundImage: 'url(/assets/img/circle-responder-boat-colored.svg)' }}></div>
                 </Marker>

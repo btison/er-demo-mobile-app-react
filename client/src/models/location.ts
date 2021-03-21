@@ -1,11 +1,11 @@
 export class Location {
-    latitude: number;
-    longitude: number;
+    lat: number;
+    lon: number;
 
-    static of(latitude: number, longitude: number): Location {
+    static of(lat: number, lon: number): Location {
         let location = new Location();
-        location.latitude = latitude;
-        location.longitude = longitude;
+        location.lat = lat;
+        location.lon = lon;
         return location;
     }
 }

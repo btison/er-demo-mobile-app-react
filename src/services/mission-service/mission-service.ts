@@ -1,6 +1,10 @@
 const missions = new Map<string, Mission>();
 
 export function put(mission: Mission) {
+    let responderLocation = new ResponderLocation();
+    responderLocation.currentLocation = {timestamp: 0, lat: mission.responderStartLat, lon: mission.responderStartLong};
+    responderLocation.route = mission.steps;
+    mission.responderLocation = responderLocation;
     missions.set(mission.responderId, mission);
 }
 
@@ -16,7 +20,7 @@ function remove(id: string): void {
     missions.delete(id);
 }
 
-export interface LocationHistory {
+export interface Location {
     timestamp: number;
     lat: number;
     lon: number;
@@ -32,9 +36,10 @@ export class Mission {
     incidentLong: number;
     destinationLat: number;
     destinationLong: number;
-    responderLocationHistory: LocationHistory[];
+    responderLocationHistory: Location[];
     steps: MissionStep[];
     status: string;
+    responderLocation: ResponderLocation
 }
 
 export class MissionStep {
@@ -42,4 +47,12 @@ export class MissionStep {
     wayPoint: boolean;
     lat: number;
     lon: number;
+}
+
+export class ResponderLocation {
+    currentLocation: Location;
+    distanceUnit: number = 0;
+    waiting: boolean = false;
+    status: string = 'CREATED';
+    route: MissionStep[] = [];
 }
