@@ -34,7 +34,7 @@ const MissionComponent = (props: MyProps) => {
     const [responder, setResponder] = useState<Responder>(new Responder());
     const [toast, setToast] = useState<Toast>(new Toast());
     const [shelters, setShelters] = useState<Shelter[]>([]);
-    const [button, setButton] = useState<String>('available');
+    const [button, setButton] = useState<String>(BUTTON_AVAILABLE);
     const [viewport, setViewport] = useState<WebMercatorViewport>(new WebMercatorViewport({ width: 0, height: 0, latitude: DEFAULT_CENTER.lat, longitude: DEFAULT_CENTER.lon, zoom: DEFAULT_CENTER.zoom }));
     const [responderLocation, setResponderLocation] = useState<Location>(Location.of(0, 0));
     const [waitingOnMission, setWaitingOnMission] = useState<boolean>(false);
@@ -172,6 +172,9 @@ const MissionComponent = (props: MyProps) => {
         if (button === BUTTON_AVAILABLE) {
             return (responderLocation.lat === 0 || waitingOnMission || (responder.available === true && responder.enrolled === true))
         }
+        if (button === BUTTON_PICKED_UP) {
+            return (pickedup === true || mission === null);
+        }
         return false;
     }
 
@@ -185,6 +188,12 @@ const MissionComponent = (props: MyProps) => {
                 .then(() => {
                     waitOnMission();
                 });
+        }
+        if (button === BUTTON_PICKED_UP) {
+            mission!.responderLocation.status = 'PICKEDUP';
+            mission!.responderLocation.waiting = false;
+            setPickedup(true);
+            simulateResponderInterval.start();
         }
     }
 
@@ -207,9 +216,8 @@ const MissionComponent = (props: MyProps) => {
         ResponderLocation.moveToNextLocation(mission!.responderLocation);
         setResponderLocation(Location.of(mission!.responderLocation.currentLocation.lat, mission!.responderLocation.currentLocation.lon));
         if (mission?.responderLocation.status === 'WAITING') {
-            mission.responderLocation.status = 'PICKEDUP';
-            mission.responderLocation.waiting = false;
-            setPickedup(true);
+            simulateResponderInterval.stop();
+            setButton(BUTTON_PICKED_UP);
         }
         if (mission?.responderLocation.status === 'DROPPED') {
             simulateResponderInterval.stop();

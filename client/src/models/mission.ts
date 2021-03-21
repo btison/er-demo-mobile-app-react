@@ -68,6 +68,9 @@ export class ResponderLocation {
     }
 
     static moveToNextLocation(r: ResponderLocation) {
+        if (r.waiting) {
+            return;
+        }
         let step = r.route.popLeft();
         if (step === null) {
             return;
