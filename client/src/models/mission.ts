@@ -5,7 +5,7 @@ import { Location } from "./location";
 export class Mission {
     id: string;
     incidentLocation: Location;
-    responderLocation: ResponderLocation;
+    route: Route;
 }
 
 export class MissionStep {
@@ -28,14 +28,14 @@ export class MissionStep {
     }
 }
 
-export class ResponderLocation {
+export class Route {
     currentLocation: Location;
     distanceUnit: number = 0;
     waiting: boolean = false;
     status: string = 'CREATED';
     route: Deque<MissionStep>;
 
-    static nextLocation(r: ResponderLocation): void {
+    static nextLocation(r: Route): void {
         if (r.waiting === true) {
             return;
         }
@@ -67,7 +67,7 @@ export class ResponderLocation {
         }
     }
 
-    static moveToNextLocation(r: ResponderLocation) {
+    static moveToNextLocation(r: Route) {
         if (r.waiting) {
             return;
         }

@@ -5,7 +5,7 @@ import { Responder } from '../models/responder';
 import { Location } from '../models/location';
 import { DisasterCenter } from '../models/disaster-center';
 import { Shelter } from '../models/shelter';
-import { Mission, ResponderLocation } from '../models/mission';
+import { Mission, Route } from '../models/mission';
 import { ResponderService } from '../services/responder-service';
 import { DisasterSimulatorService } from '../services/disaster-simulator-service';
 import { MissionService } from '../services/mission-service';
@@ -190,8 +190,8 @@ const MissionComponent = (props: MyProps) => {
                 });
         }
         if (button === BUTTON_PICKED_UP) {
-            mission!.responderLocation.status = 'PICKEDUP';
-            mission!.responderLocation.waiting = false;
+            mission!.route.status = 'PICKEDUP';
+            mission!.route.waiting = false;
             setPickedup(true);
             simulateResponderInterval.start();
         }
@@ -200,7 +200,7 @@ const MissionComponent = (props: MyProps) => {
     const getMissionInterval: IntervalHookResult = useInterval(() => {
         missionService.get(responder.id).then((mission) => {
             if (mission !== null) {
-                mission.responderLocation.distanceUnit = responder.distanceUnit!;
+                mission.route.distanceUnit = responder.distanceUnit!;
                 setMission(mission);
                 setWaitingOnMission(false);
                 setToast(new Toast());
@@ -212,14 +212,14 @@ const MissionComponent = (props: MyProps) => {
     }, 2000, { autoStart: false });
 
     const simulateResponderInterval: IntervalHookResult = useInterval(() => {
-        ResponderLocation.nextLocation(mission!.responderLocation);
-        ResponderLocation.moveToNextLocation(mission!.responderLocation);
-        setResponderLocation(Location.of(mission!.responderLocation.currentLocation.lat, mission!.responderLocation.currentLocation.lon));
-        if (mission?.responderLocation.status === 'WAITING') {
+        Route.nextLocation(mission!.route);
+        Route.moveToNextLocation(mission!.route);
+        setResponderLocation(Location.of(mission!.route.currentLocation.lat, mission!.route.currentLocation.lon));
+        if (mission?.route.status === 'WAITING') {
             simulateResponderInterval.stop();
             setButton(BUTTON_PICKED_UP);
         }
-        if (mission?.responderLocation.status === 'DROPPED') {
+        if (mission?.route.status === 'DROPPED') {
             simulateResponderInterval.stop();
             setMission(null);
             setPickedup(false);

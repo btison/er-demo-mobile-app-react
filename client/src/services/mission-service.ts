@@ -1,6 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import { Location } from '../models/location';
-import { Mission, ResponderLocation } from '../models/mission';
+import { Mission, Route } from '../models/mission';
 import { Deque } from '@blakeembrey/deque'
 
 export class MissionService {
@@ -18,9 +18,9 @@ export class MissionService {
                 const mission = new Mission();
                 mission.id = data.id;
                 mission.incidentLocation = Location.of(data.incidentLat, data.incidentLong);
-                mission.responderLocation = new ResponderLocation();
-                mission.responderLocation.currentLocation = Location.of(data.responderStartLat, data.responderStartLong)
-                mission.responderLocation.route = new Deque(data.steps);
+                mission.route = new Route();
+                mission.route.currentLocation = Location.of(data.responderStartLat, data.responderStartLong)
+                mission.route.route = new Deque(data.steps);
                 return mission;
             })
             .catch(ex => this.handleError('Error fetching mission', ex));
