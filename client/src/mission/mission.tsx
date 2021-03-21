@@ -251,7 +251,10 @@ const MissionComponent = (props: MyProps) => {
                     latitude={responderLocation.lat}
                     longitude={responderLocation.lon}
                 >
-                    <div className="responderMarker" style={{ backgroundImage: 'url(/assets/img/circle-responder-boat-colored.svg)' }}></div>
+                    {!pickedup &&
+                        <div className="responderMarker" style={{ backgroundImage: 'url(/assets/img/circle-responder-boat-colored.svg)' }}></div>}
+                    {pickedup &&
+                        <div className="responderMarker" style={{ backgroundImage: 'url(/assets/img/circle-responder-boat-colored-pickedup.svg)' }}></div>}
                 </Marker>
             )
         }
