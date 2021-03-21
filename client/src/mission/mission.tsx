@@ -38,6 +38,7 @@ const MissionComponent = (props: MyProps) => {
     const [viewport, setViewport] = useState<WebMercatorViewport>(new WebMercatorViewport({ width: 0, height: 0, latitude: DEFAULT_CENTER.lat, longitude: DEFAULT_CENTER.lon, zoom: DEFAULT_CENTER.zoom }));
     const [responderLocation, setResponderLocation] = useState<Location>(Location.of(0, 0));
     const [waitingOnMission, setWaitingOnMission] = useState<boolean>(false);
+    const [pickedup, setPickedup] = useState<boolean>(false);
     const [mission, setMission] = useState<Mission | null>(null);
 
     const responderService = new ResponderService();
@@ -208,9 +209,12 @@ const MissionComponent = (props: MyProps) => {
         if (mission?.responderLocation.status === 'WAITING') {
             mission.responderLocation.status = 'PICKEDUP';
             mission.responderLocation.waiting = false;
+            setPickedup(true);
         }
         if (mission?.responderLocation.status === 'DROPPED') {
             simulateResponderInterval.stop();
+            setMission(null);
+            setPickedup(false);
         }
     }, props.simulationDelay, { autoStart: false });
 
@@ -252,7 +256,10 @@ const MissionComponent = (props: MyProps) => {
                     latitude={mission.incidentLocation.lat}
                     longitude={mission.incidentLocation.lon}
                 >
-                    <div className="incidentMarker" style={{ backgroundImage: 'url(/assets/img/marker-incident-helpassigned-colored2.svg)' }}></div>
+                    {pickedup &&
+                        <div className="incidentMarker" style={{ backgroundImage: 'url(/assets/img/marker-incident-pickedup-colored2.svg)' }}></div>}
+                    {!pickedup &&
+                        <div className="incidentMarker" style={{ backgroundImage: 'url(/assets/img/marker-incident-helpassigned-colored2.svg)' }}></div>}
                 </Marker>
             )
         }
