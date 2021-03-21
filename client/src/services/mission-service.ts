@@ -17,6 +17,7 @@ export class MissionService {
                 let data = response.data;
                 const mission = new Mission();
                 mission.id = data.id;
+                mission.incidentLocation = Location.of(data.incidentLat, data.incidentLong);
                 mission.responderLocation = new ResponderLocation();
                 mission.responderLocation.currentLocation = Location.of(data.responderStartLat, data.responderStartLong)
                 mission.responderLocation.route = new Deque(data.steps);

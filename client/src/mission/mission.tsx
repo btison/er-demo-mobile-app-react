@@ -204,6 +204,7 @@ const MissionComponent = (props: MyProps) => {
     const simulateResponderInterval: IntervalHookResult = useInterval(() => {
         ResponderLocation.nextLocation(mission!.responderLocation);
         ResponderLocation.moveToNextLocation(mission!.responderLocation);
+        setResponderLocation(Location.of(mission!.responderLocation.currentLocation.lat, mission!.responderLocation.currentLocation.lon));
         if (mission?.responderLocation.status === 'WAITING') {
             mission.responderLocation.status = 'PICKEDUP';
             mission.responderLocation.waiting = false;
@@ -211,7 +212,6 @@ const MissionComponent = (props: MyProps) => {
         if (mission?.responderLocation.status === 'DROPPED') {
             simulateResponderInterval.stop();
         }
-        setResponderLocation(Location.of(mission!.responderLocation.currentLocation.lat, mission!.responderLocation.currentLocation.lon));
     }, props.simulationDelay, { autoStart: false });
 
     const waitOnMission = () => {
@@ -245,6 +245,19 @@ const MissionComponent = (props: MyProps) => {
         }
     }
 
+    const incidentMarker = (): any => {
+        if (!(mission === null)) {
+            return (
+                <Marker
+                    latitude={mission.incidentLocation.lat}
+                    longitude={mission.incidentLocation.lon}
+                >
+                    <div className="incidentMarker" style={{ backgroundImage: 'url(/assets/img/marker-incident-helpassigned-colored2.svg)' }}></div>
+                </Marker>
+            )
+        }
+    }
+
     return (
         <IonPage>
             <IonHeader>
@@ -265,6 +278,7 @@ const MissionComponent = (props: MyProps) => {
                 >
                     {shelterMarkers}
                     {responderMarker()}
+                    {incidentMarker()}
                 </ReactMapGL>
             </IonContent>
             <IonButton

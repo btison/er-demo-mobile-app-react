@@ -4,6 +4,7 @@ import { Location } from "./location";
 
 export class Mission {
     id: string;
+    incidentLocation: Location;
     responderLocation: ResponderLocation;
 }
 
