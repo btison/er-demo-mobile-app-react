@@ -17,6 +17,10 @@ import './mission.css';
 
 interface MyProps {
     userProfile: Keycloak.KeycloakProfile
+    accessToken: string
+    simulationDistanceBase: number
+    simulationDelay: number
+    simulationDistanceVariation: number
 }
 
 const MissionComponent = (props: MyProps) => {
@@ -34,8 +38,6 @@ const MissionComponent = (props: MyProps) => {
     const [responderLocation, setResponderLocation] = useState<Location>(Location.of(0, 0));
     const [waitingOnMission, setWaitingOnMission] = useState<boolean>(false);
     const [mission, setMission] = useState<Mission | null>(null);
-
-    const accessToken = (window as any)['_env'].accessToken;
 
     const responderService = new ResponderService();
     const missionService = new MissionService();
@@ -236,7 +238,7 @@ const MissionComponent = (props: MyProps) => {
             </IonHeader>
             <IonContent fullscreen>
                 <ReactMapGL
-                    mapboxApiAccessToken={accessToken}
+                    mapboxApiAccessToken={props.accessToken}
                     mapStyle="mapbox://styles/mapbox/streets-v11"
                     latitude={viewport.latitude}
                     longitude={viewport.longitude}

@@ -7,4 +7,7 @@
     window._env.clientId = '';
     window._env.enabled = '';
     window._env.accessToken = '';
+    window._env.simulationDistanceBase = '';
+    window._env.simulationDistanceVariation = '';
+    window._env.simulationDelay = '';
   })(this);

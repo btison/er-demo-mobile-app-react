@@ -71,6 +71,10 @@ class App extends React.Component<MyProps, MyState> {
                           <Route exact path="/mission">
                             <MissionComponent
                               userProfile={this.state.keycloak.getUserProfile()}
+                              accessToken={(window as any)['_env'].accessToken}
+                              simulationDistanceBase={Number((window as any)['_env'].simulationDistanceBase)}
+                              simulationDistanceVariation={Number((window as any)['_env'].simulationDistanceVariation)}
+                              simulationDelay={Number((window as any)['_env'].simulationDelay)}
                             />
                           </Route>
                           <Route exact path="/">
