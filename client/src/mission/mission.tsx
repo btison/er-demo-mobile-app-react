@@ -149,6 +149,7 @@ const MissionComponent = (props: MyProps) => {
         });
         getShelters().then((shelters) => setShelters(shelters));
         getResponder().then((responder) => {
+            responder.distanceUnit = Utils.random(props.simulationDistanceBase, props.simulationDistanceBase * (1 + props.simulationDistanceVariation));
             if (responder.latitude == null || responder.latitude === 0) {
                 generateLocation().then((location) => {
                     if (location) {
@@ -163,7 +164,7 @@ const MissionComponent = (props: MyProps) => {
                 setResponderLocation(Location.of(responder.latitude as number, responder.longitude as number));
             }
         });
-    }, [props.userProfile, DEFAULT_CENTER]);
+    }, [props.userProfile, DEFAULT_CENTER, props.simulationDistanceBase, props.simulationDistanceVariation]);
 
     const buttonDisabled = (): boolean => {
         if (button === BUTTON_AVAILABLE) {
