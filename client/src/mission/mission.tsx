@@ -225,6 +225,10 @@ const MissionComponent = (props: MyProps) => {
             simulateResponderInterval.stop();
             setMission(null);
             setPickedup(false);
+            responder.enrolled = false;
+            responder.available = true;
+            setResponder(responder);
+            setButton(BUTTON_AVAILABLE);
         }
     }, props.simulationDelay, { autoStart: false });
 
