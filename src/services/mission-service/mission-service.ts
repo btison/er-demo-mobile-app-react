@@ -2,7 +2,7 @@ const missions = new Map<string, Mission>();
 
 export function put(mission: Mission) {
     let responderLocation = new Route();
-    responderLocation.currentLocation = {timestamp: 0, lat: mission.responderStartLat, lon: mission.responderStartLong};
+    responderLocation.currentLocation = { timestamp: 0, lat: mission.responderStartLat, lon: mission.responderStartLong };
     responderLocation.route = mission.steps;
     mission.responderLocation = responderLocation;
     missions.set(mission.responderId, mission);
@@ -18,6 +18,17 @@ export function get(id: string): Mission | null {
 
 function remove(id: string): void {
     missions.delete(id);
+}
+
+export function update(id: string, responderLocation: Route): void {
+    if (missions.has(id)) {
+        missions.get(id)!.responderLocation = responderLocation;
+        if (responderLocation.status === '') {
+            //notify responder simulator service;
+        }
+    } else {
+        console.warn(`Mission with id ${id} not found`);
+    }
 }
 
 export interface Location {

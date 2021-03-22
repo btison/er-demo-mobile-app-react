@@ -193,6 +193,7 @@ const MissionComponent = (props: MyProps) => {
             mission!.route.status = 'PICKEDUP';
             mission!.route.waiting = false;
             setPickedup(true);
+            missionService.update(responder.id, mission!.route);
             simulateResponderInterval.start();
         }
     }
@@ -215,6 +216,7 @@ const MissionComponent = (props: MyProps) => {
         Route.nextLocation(mission!.route);
         Route.moveToNextLocation(mission!.route);
         setResponderLocation(Location.of(mission!.route.currentLocation.lat, mission!.route.currentLocation.lon));
+        missionService.update(responder.id, mission!.route);
         if (mission?.route.status === 'WAITING') {
             simulateResponderInterval.stop();
             setButton(BUTTON_PICKED_UP);

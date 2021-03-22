@@ -1,11 +1,12 @@
 import express from 'express';
+import bodyParser from 'body-parser';
 import path from 'path';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import { Kafka, logLevel } from 'kafkajs';
 import { KafkaMessage } from './cloudevents';
 import { ResponderService } from './services/responder-service';
 import { MissionService } from './services/mission-service';
-import { Mission } from './services/mission-service/mission-service';
+import { Mission, Route } from './services/mission-service/mission-service';
 
 const app = express();
 
@@ -63,12 +64,21 @@ app.use(
 );
 
 app.get('/mission-service/mission/:id', (req, res) => {
-    let mission: Mission| null = MissionService.get(req.params.id);
+    let mission: Mission | null = MissionService.get(req.params.id);
     if (mission === null) {
         res.status(404).send('Mission not found');
     } else {
         res.status(200).json(mission)
     }
+});
+
+app.use(bodyParser.json());
+
+app.post('/mission-service/mission/:id', (req, res) => {
+    const responderLocation: Route = req.body;
+    MissionService.update(req.params.id, responderLocation);
+    res.status(204).send();
+    // TODO: error handling?
 });
 
 app.get('*', (req, res) => {
