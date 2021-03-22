@@ -1,7 +1,7 @@
 const missions = new Map<string, Mission>();
 
 export function put(mission: Mission) {
-    let responderLocation = new ResponderLocation();
+    let responderLocation = new Route();
     responderLocation.currentLocation = {timestamp: 0, lat: mission.responderStartLat, lon: mission.responderStartLong};
     responderLocation.route = mission.steps;
     mission.responderLocation = responderLocation;
@@ -39,7 +39,7 @@ export class Mission {
     responderLocationHistory: Location[];
     steps: MissionStep[];
     status: string;
-    responderLocation: ResponderLocation
+    responderLocation: Route
 }
 
 export class MissionStep {
@@ -49,9 +49,8 @@ export class MissionStep {
     lon: number;
 }
 
-export class ResponderLocation {
+export class Route {
     currentLocation: Location;
-    distanceUnit: number = 0;
     waiting: boolean = false;
     status: string = 'CREATED';
     route: MissionStep[] = [];
