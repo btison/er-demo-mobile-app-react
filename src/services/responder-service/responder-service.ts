@@ -7,15 +7,18 @@ async function getById(id: string): Promise<Responder> {
     })
         .then((response) => {
             if (response.status === 404) {
-                return new Responder();
+                return null;
             }
             return response.data;
         })
-        .catch(ex => handleError('Error retrieving responder by name', ex));
+        .catch(ex => handleError('Error retrieving responder by id', ex));
 }
 
 export async function isPerson(id: string): Promise<boolean> {
     return getById(id).then((responder) => {
+        if (responder === null) {
+            return false;
+        }
         if (!responder.person) {
             return false;
         } else {

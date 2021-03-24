@@ -1,10 +1,12 @@
+import { ResponderSimulatorService } from "../responder-simulator";
+
 const missions = new Map<string, Mission>();
 
 export function put(mission: Mission) {
-    let responderLocation = new Route();
-    responderLocation.currentLocation = { timestamp: 0, lat: mission.responderStartLat, lon: mission.responderStartLong };
-    responderLocation.route = mission.steps;
-    mission.responderLocation = responderLocation;
+    let route = new Route();
+    route.currentLocation = { timestamp: 0, lat: mission.responderStartLat, lon: mission.responderStartLong };
+    route.route = mission.steps;
+    mission.responderLocation = route;
     missions.set(mission.responderId, mission);
 }
 
@@ -20,12 +22,14 @@ function remove(id: string): void {
     missions.delete(id);
 }
 
-export function update(id: string, responderLocation: Route): void {
+export function update(id: string, route: Route): void {
     if (missions.has(id)) {
-        missions.get(id)!.responderLocation = responderLocation;
-        if (responderLocation.status === '') {
-            //notify responder simulator service;
+        const mission = missions.get(id);
+        mission!.responderLocation = route;
+        if (route.status === 'DROPPED') {
+            missions.delete(id);
         }
+        ResponderSimulatorService.update(mission!.id, route);
     } else {
         console.warn(`Mission with id ${id} not found`);
     }
