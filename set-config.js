@@ -10,7 +10,7 @@ doReplace('realm', process.env.REALM);
 doReplace('clientId', process.env.CLIENTID);
 doReplace('accessToken', process.env.TOKEN);
 doReplace('simulationDistanceBase', process.env.SIMULATION_DISTANCE_BASE || '750');
-doReplace('simulationDistanceVariation', process.env.SIMULATION_DISTANCE_BASE || '0.2');
+doReplace('simulationDistanceVariation', process.env.SIMULATION_DISTANCE_VAR || '0.2');
 doReplace('simulationDelay', process.env.SIMULATION_DELAY || '5000');
 
 function doReplace(key, value) {
