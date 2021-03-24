@@ -4,9 +4,10 @@
   "description": "Mobile app for the Emergency Response Demo",
   "main": "server.js",
   "scripts": {
-    "start": "tsc && node set-config.js && node dist/server.js",
-    "build": "cd client && (npm install && npm run build)",
-    "build-dev": "cd client && (npm run build)",
+    "start": "node set-config.js && node dist/server.js",
+    "build": "tsc && cd client && (npm run build)",
+    "build-client": "cd client && (npm run build)",
+    "build-server": "tsc",
     "dev": "nodemon server.js"
   },
   "license": "MIT",
