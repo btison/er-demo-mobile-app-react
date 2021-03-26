@@ -49,3 +49,19 @@ function toRadians(degrees: number): number {
 function toDegrees(radians: number): number {
     return radians * (180 / Math.PI);
 }
+
+export function initGeoJson(): GeoJSON.FeatureCollection<GeoJSON.LineString> {
+    return {
+        type: 'FeatureCollection',
+        features: [
+            {
+                type: 'Feature',
+                properties: {},
+                geometry: {
+                    type: 'LineString',
+                    coordinates: []
+                }
+            }
+        ]
+    };
+}

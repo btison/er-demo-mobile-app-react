@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonToast, IonButton, IonSpinner } from '@ionic/react';
-import ReactMapGL, { WebMercatorViewport, Marker } from 'react-map-gl';
+import ReactMapGL, { WebMercatorViewport, Marker, Source, Layer } from 'react-map-gl';
 import { Responder } from '../models/responder';
 import { Location } from '../models/location';
 import { DisasterCenter } from '../models/disaster-center';
@@ -40,6 +40,8 @@ const MissionComponent = (props: MyProps) => {
     const [waitingOnMission, setWaitingOnMission] = useState<boolean>(false);
     const [pickedup, setPickedup] = useState<boolean>(false);
     const [mission, setMission] = useState<Mission | null>(null);
+    const [pickupData, setPickupData] = useState<GeoJSON.FeatureCollection<GeoJSON.LineString>>(Utils.initGeoJson());
+    const [deliverData, setDeliverData] = useState<GeoJSON.FeatureCollection<GeoJSON.LineString>>(Utils.initGeoJson);
 
     const responderService = new ResponderService();
     const missionService = new MissionService();
@@ -176,7 +178,7 @@ const MissionComponent = (props: MyProps) => {
             return (pickedup === true || mission === null);
         }
         return false;
-    }
+    };
 
     const buttonClicked = () => {
         if (button === BUTTON_AVAILABLE) {
@@ -196,13 +198,14 @@ const MissionComponent = (props: MyProps) => {
             missionService.update(responder.id, mission!.route);
             simulateResponderInterval.start();
         }
-    }
+    };
 
     const getMissionInterval: IntervalHookResult = useInterval(() => {
         missionService.get(responder.id).then((mission) => {
             if (mission !== null) {
                 mission.route.distanceUnit = responder.distanceUnit!;
                 setMission(mission);
+                setRoutes(mission);
                 setWaitingOnMission(false);
                 setToast(new Toast());
                 setToast(MessageService.success('You have been assigned a mission'));
@@ -229,15 +232,39 @@ const MissionComponent = (props: MyProps) => {
             responder.available = true;
             setResponder(responder);
             setButton(BUTTON_AVAILABLE);
+            setDeliverData(Utils.initGeoJson());
+            setPickupData(Utils.initGeoJson());
         }
     }, props.simulationDelay, { autoStart: false });
+
+    const setRoutes = (mission: Mission) => {
+        const pickup: GeoJSON.Position[] = [];
+        const deliver: GeoJSON.Position[] = [];
+        let foundWayPoint = false;
+        for (let step of mission!.route.route.entries()) {
+            if (foundWayPoint) {
+                deliver.push([step.lon, step.lat]);
+            } else {
+                pickup.push([step.lon, step.lat]);
+            }
+            if (step.wayPoint) {
+                foundWayPoint = true;
+            }
+        };
+        const dd = Utils.initGeoJson();
+        dd.features[0].geometry.coordinates = deliver;
+        setDeliverData(dd);
+        const pd = Utils.initGeoJson();
+        pd.features[0].geometry.coordinates = pickup;
+        setPickupData(pd);
+    };
 
     const waitOnMission = () => {
         setWaitingOnMission(true);
         setToast(new Toast());
         setToast(MessageService.info('Waiting to receive a rescue mission'));
         getMissionInterval.start();
-    }
+    };
 
     const shelterMarkers = useMemo(() =>
         shelters.map((shelter) => (
@@ -264,7 +291,7 @@ const MissionComponent = (props: MyProps) => {
                 </Marker>
             )
         }
-    }
+    };
 
     const incidentMarker = (): any => {
         if (!(mission === null)) {
@@ -280,7 +307,35 @@ const MissionComponent = (props: MyProps) => {
                 </Marker>
             )
         }
-    }
+    };
+
+    const pickupLayer = (): any => {
+        if (!(mission === null)) {
+            return (
+                <Source id='pickupData' type='geojson' data={pickupData}>
+                    <Layer
+                        id='pickup'
+                        type='line'
+                        paint={{ 'line-color': '#ffc107', 'line-width': 8 }}
+                    ></Layer>
+                </Source>
+            )
+        }
+    };
+
+    const deliverLayer = (): any => {
+        if (!(mission === null)) {
+            return (
+                <Source id='deliverData' type='geojson' data={deliverData}>
+                    <Layer
+                        id='deliver'
+                        type='line'
+                        paint={{ 'line-color': '#20a8d8', 'line-width': 8 }}
+                    ></Layer>
+                </Source>
+            )
+        }
+    };
 
     return (
         <IonPage>
@@ -303,6 +358,8 @@ const MissionComponent = (props: MyProps) => {
                     {shelterMarkers}
                     {responderMarker()}
                     {incidentMarker()}
+                    {pickupLayer()}
+                    {deliverLayer()}
                 </ReactMapGL>
             </IonContent>
             <IonButton
