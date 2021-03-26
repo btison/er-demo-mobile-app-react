@@ -16,16 +16,19 @@
     background-size: contain;
     width: 1.5em;
     height: 1.5em;
+    transform: translate(-50%, -50%);
 }
 
 .responderMarker {
     background-size: contain;
     width: 1.5em;
     height: 1.5em;
+    transform: translate(-50%, -50%);
 }
 
 .incidentMarker {
     background-size: contain;
     width: 1.5em;
     height: 1.5em;
+    transform: translate(-50%, -50%);
 }
