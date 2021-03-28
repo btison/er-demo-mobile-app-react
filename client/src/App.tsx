@@ -2,10 +2,11 @@ import React from 'react';
 import { Redirect, Route } from 'react-router-dom';
 import { IonApp, IonRouterOutlet } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
+import { ToastProvider } from '@agney/ir-toast';
 import { KeycloakOptions } from './keycloak/keycloak-options';
 import { KeycloakService } from './keycloak/keycloak';
-import './App.css';
 import MissionComponent from './mission/mission';
+import './App.css';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -66,35 +67,37 @@ class App extends React.Component<MyProps, MyState> {
             if (this.state.authenticated) {
                 return (
                     <IonApp>
-                      <IonReactRouter>
-                        <IonRouterOutlet>
-                          <Route exact path="/mission">
-                            <MissionComponent
-                              userProfile={this.state.keycloak.getUserProfile()}
-                              accessToken={(window as any)['_env'].accessToken}
-                              simulationDistanceBase={Number((window as any)['_env'].simulationDistanceBase)}
-                              simulationDistanceVariation={Number((window as any)['_env'].simulationDistanceVariation)}
-                              simulationDelay={Number((window as any)['_env'].simulationDelay)}
-                            />
-                          </Route>
-                          <Route exact path="/">
-                            <Redirect to="/mission" />
-                          </Route>
-                        </IonRouterOutlet>
-                      </IonReactRouter>
+                        <ToastProvider value={{ position: 'top', duration: 3000 }}>
+                            <IonReactRouter>
+                                <IonRouterOutlet>
+                                    <Route exact path="/mission">
+                                        <MissionComponent
+                                            userProfile={this.state.keycloak.getUserProfile()}
+                                            accessToken={(window as any)['_env'].accessToken}
+                                            simulationDistanceBase={Number((window as any)['_env'].simulationDistanceBase)}
+                                            simulationDistanceVariation={Number((window as any)['_env'].simulationDistanceVariation)}
+                                            simulationDelay={Number((window as any)['_env'].simulationDelay)}
+                                        />
+                                    </Route>
+                                    <Route exact path="/">
+                                        <Redirect to="/mission" />
+                                    </Route>
+                                </IonRouterOutlet>
+                            </IonReactRouter>
+                        </ToastProvider>
                     </IonApp>
                 );
             } else {
                 return (
-                  <IonApp>  
-                    <div>Unable to authenticate!</div>
-                  </IonApp>
+                    <IonApp>
+                        <div>Unable to authenticate!</div>
+                    </IonApp>
                 );
             }
         }
         return (
             <IonApp>
-              <div>Initializing...</div>
+                <div>Initializing...</div>
             </IonApp>
         );
     }

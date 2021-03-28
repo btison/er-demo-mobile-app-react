@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonToast, IonButton, IonSpinner } from '@ionic/react';
-import ReactMapGL, { WebMercatorViewport} from 'react-map-gl';
+import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonButton, IonSpinner } from '@ionic/react';
+import ReactMapGL, { WebMercatorViewport } from 'react-map-gl';
+import { useToast } from '@agney/ir-toast';
 import { Responder } from '../models/responder';
 import { Location } from '../models/location';
 import { DisasterCenter } from '../models/disaster-center';
@@ -9,7 +10,6 @@ import { Mission, Route } from '../models/mission';
 import { ResponderService } from '../services/responder-service';
 import { DisasterSimulatorService } from '../services/disaster-simulator-service';
 import { MissionService } from '../services/mission-service';
-import { MessageService, Toast } from '../services/message-service'
 import { DisasterService } from '../services/disaster-service';
 import { IntervalHookResult, useInterval } from "react-interval-hook";
 import { Utils } from "../utils";
@@ -35,7 +35,6 @@ const MissionComponent = (props: Props) => {
     const DEFAULT_CENTER = useMemo(() => new DisasterCenter('default', 34.158808, -77.886765, 10.5), []);
 
     const [responder, setResponder] = useState<Responder>(new Responder());
-    const [toast, setToast] = useState<Toast>(new Toast());
     const [shelters, setShelters] = useState<Shelter[]>([]);
     const [button, setButton] = useState<String>(BUTTON_AVAILABLE);
     const [viewport, setViewport] = useState<WebMercatorViewport>(new WebMercatorViewport({ width: 0, height: 0, latitude: DEFAULT_CENTER.lat, longitude: DEFAULT_CENTER.lon, zoom: DEFAULT_CENTER.zoom }));
@@ -46,6 +45,8 @@ const MissionComponent = (props: Props) => {
 
     const responderService = new ResponderService();
     const missionService = new MissionService();
+
+    const Toast = useToast();
 
     useEffect(() => {
         const DEFAULT_PHONE_NUMBER = '111-222-333';
@@ -61,14 +62,13 @@ const MissionComponent = (props: Props) => {
             try {
                 let responder = await responderService.getByName(responderName);
                 if (responder.id === "0") {
-                    setToast(MessageService.info('Registering as new responder'));
+                    Toast.create({ message: 'Registering as new responder', color: 'primary' }).present();
                     responder = await registerResponder(true);
                 }
                 return Promise.resolve(responder);
             } catch (e) {
                 if (e instanceof Error) {
-                    setToast(new Toast());
-                    setToast(MessageService.error(e.message));
+                    Toast.error(e.message).present();
                     return Promise.resolve(new Responder());
                 } else {
                     throw e;
@@ -112,8 +112,7 @@ const MissionComponent = (props: Props) => {
                 return disasterSimulatorService.generateLocation();
             } catch (e) {
                 if (e instanceof Error) {
-                    setToast(new Toast());
-                    setToast(MessageService.error(e.message));
+                    Toast.error(e.message).present();
                     return Promise.resolve(null);
                 } else {
                     throw e;
@@ -126,8 +125,7 @@ const MissionComponent = (props: Props) => {
                 return disasterService.getDisasterCenter();
             } catch (e) {
                 if (e instanceof Error) {
-                    setToast(new Toast());
-                    setToast(MessageService.error(e.message));
+                    Toast.error(e.message).present();
                     return Promise.resolve(DEFAULT_CENTER);
                 } else {
                     throw e;
@@ -140,8 +138,7 @@ const MissionComponent = (props: Props) => {
                 return disasterService.getShelters();
             } catch (e) {
                 if (e instanceof Error) {
-                    setToast(new Toast());
-                    setToast(MessageService.error(e.message));
+                    Toast.error(e.message).present();
                     return Promise.resolve([]);
                 } else {
                     throw e;
@@ -169,7 +166,7 @@ const MissionComponent = (props: Props) => {
                 setResponderLocation(Location.of(responder.latitude as number, responder.longitude as number));
             }
         });
-    }, [props.userProfile, DEFAULT_CENTER, props.simulationDistanceBase, props.simulationDistanceVariation]);
+    }, [props.userProfile, DEFAULT_CENTER, props.simulationDistanceBase, props.simulationDistanceVariation, Toast]);
 
     const buttonDisabled = (): boolean => {
         if (button === BUTTON_AVAILABLE) {
@@ -207,8 +204,7 @@ const MissionComponent = (props: Props) => {
                 mission.route.distanceUnit = responder.distanceUnit!;
                 setMission(mission);
                 setWaitingOnMission(false);
-                setToast(new Toast());
-                setToast(MessageService.success('You have been assigned a mission'));
+                Toast.success('You have been assigned a mission').present();
                 getMissionInterval.stop();
                 simulateResponderInterval.start();
             }
@@ -237,8 +233,7 @@ const MissionComponent = (props: Props) => {
 
     const waitOnMission = () => {
         setWaitingOnMission(true);
-        setToast(new Toast());
-        setToast(MessageService.info('Waiting to receive a rescue mission'));
+        Toast.create({ message: 'Waiting to receive a rescue mission', color: 'primary' }).present();
         getMissionInterval.start();
     };
 
@@ -296,14 +291,6 @@ const MissionComponent = (props: Props) => {
                 {waitingOnMission &&
                     <IonSpinner name="crescent" />}
             </IonButton>
-            <IonToast
-                isOpen={toast.open}
-                onDidDismiss={() => setToast(new Toast())}
-                message={toast.message}
-                duration={toast.duration}
-                color={toast.color}
-                position={toast.position}
-            />
         </IonPage>
     );
 }
