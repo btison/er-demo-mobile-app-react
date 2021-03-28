@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonToast, IonButton, IonSpinner } from '@ionic/react';
-import ReactMapGL, { WebMercatorViewport, Marker } from 'react-map-gl';
+import ReactMapGL, { WebMercatorViewport} from 'react-map-gl';
 import { Responder } from '../models/responder';
 import { Location } from '../models/location';
 import { DisasterCenter } from '../models/disaster-center';
@@ -15,6 +15,8 @@ import { IntervalHookResult, useInterval } from "react-interval-hook";
 import { Utils } from "../utils";
 import RouteComponent from './route';
 import ShelterComponent from './shelters';
+import IncidentComponent from './incident';
+import ResponderComponent from './responder';
 import './mission.css';
 
 interface Props {
@@ -240,38 +242,6 @@ const MissionComponent = (props: Props) => {
         getMissionInterval.start();
     };
 
-    const responderMarker = (): any => {
-        if (!(responderLocation.lat === 0)) {
-            return (
-                <Marker
-                    latitude={responderLocation.lat}
-                    longitude={responderLocation.lon}
-                >
-                    {!pickedup &&
-                        <div className="responderMarker" style={{ backgroundImage: 'url(/assets/img/circle-responder-boat-colored.svg)' }}></div>}
-                    {pickedup &&
-                        <div className="responderMarker" style={{ backgroundImage: 'url(/assets/img/circle-responder-boat-colored-pickedup.svg)' }}></div>}
-                </Marker>
-            )
-        }
-    };
-
-    const incidentMarker = (): any => {
-        if (!(mission === null)) {
-            return (
-                <Marker
-                    latitude={mission.incidentLocation.lat}
-                    longitude={mission.incidentLocation.lon}
-                >
-                    {pickedup &&
-                        <div className="incidentMarker" style={{ backgroundImage: 'url(/assets/img/marker-incident-pickedup-colored2.svg)' }}></div>}
-                    {!pickedup &&
-                        <div className="incidentMarker" style={{ backgroundImage: 'url(/assets/img/marker-incident-helpassigned-colored2.svg)' }}></div>}
-                </Marker>
-            )
-        }
-    };
-
     return (
         <IonPage>
             <IonHeader>
@@ -293,8 +263,14 @@ const MissionComponent = (props: Props) => {
                     <ShelterComponent
                         shelters={shelters}
                     />
-                    {responderMarker()}
-                    {incidentMarker()}
+                    <ResponderComponent
+                        location={responderLocation}
+                        pickedup={pickedup}
+                    />
+                    <IncidentComponent
+                        mission={mission}
+                        pickedup={pickedup}
+                    />
                     <RouteComponent
                         mission={mission}
                         type='deliver'
