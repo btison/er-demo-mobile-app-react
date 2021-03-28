@@ -14,6 +14,7 @@ import { DisasterService } from '../services/disaster-service';
 import { IntervalHookResult, useInterval } from "react-interval-hook";
 import { Utils } from "../utils";
 import RouteComponent from './route';
+import ShelterComponent from './shelters';
 import './mission.css';
 
 interface Props {
@@ -239,17 +240,6 @@ const MissionComponent = (props: Props) => {
         getMissionInterval.start();
     };
 
-    const shelterMarkers = useMemo(() =>
-        shelters.map((shelter) => (
-            <Marker
-                latitude={shelter.lat}
-                longitude={shelter.lon}
-            >
-                <div className="shelter" style={{ backgroundImage: 'url(/assets/img/circle-shelter-hospital-colored.svg)' }}></div>
-            </Marker>
-        )
-        ), [shelters]);
-
     const responderMarker = (): any => {
         if (!(responderLocation.lat === 0)) {
             return (
@@ -300,7 +290,9 @@ const MissionComponent = (props: Props) => {
                     height='100vh'
                     onViewportChange={(viewport: WebMercatorViewport) => setViewport(viewport)}
                 >
-                    {shelterMarkers}
+                    <ShelterComponent
+                        shelters={shelters}
+                    />
                     {responderMarker()}
                     {incidentMarker()}
                     <RouteComponent
