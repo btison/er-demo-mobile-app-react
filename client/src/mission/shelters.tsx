@@ -1,6 +1,6 @@
-import { Shelter } from "../models/shelter";
+import React from "react";
 import { Marker } from 'react-map-gl';
-import React, { useEffect, useState } from "react";
+import { Shelter } from "../models/shelter";
 
 interface Props {
     shelters: Shelter[]
@@ -8,15 +8,9 @@ interface Props {
 
 const ShelterComponent = React.memo(function ShelterComponent(props: Props) {
 
-    const [shelters, setShelters] = useState<Shelter[]>([]);
-
-    useEffect(() => {
-        setShelters(props.shelters);
-    }, [props.shelters]);
-
     return (
         <div>
-            {shelters.map((shelter) => {
+            {props.shelters.map((shelter) => {
                 return (
                     <React.Fragment key={shelter.id}>
                         <Marker
