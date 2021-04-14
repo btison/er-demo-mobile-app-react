@@ -1,105 +1,87 @@
-import express from 'express';
-import bodyParser from 'body-parser';
+import fastify, { FastifyInstance } from 'fastify';
+import fastifyStatic from 'fastify-static'
+import fastifyHttpProxy from 'fastify-http-proxy';
 import path from 'path';
-import { createProxyMiddleware } from 'http-proxy-middleware';
 import { Kafka, logLevel } from 'kafkajs';
 import { KafkaMessage } from './cloudevents';
 import { ResponderService } from './services/responder-service';
 import { MissionService } from './services/mission-service';
 import { Mission, Route } from './services/mission-service/mission-service';
 
-const app = express();
-
-app.set('port', process.env.PORT || 8080);
-app.set('responder-service', process.env.RESPONDER_SERVICE);
-app.set('disaster-simulator', process.env.DISASTER_SIMULATOR);
-app.set('disaster-service', process.env.DISASTER_SERVICE);
-if (process.env.KAFKA_HOST) {
-    app.set('kafka-host', process.env.KAFKA_HOST.split(','));
-}
-app.set('kafka-groupid', process.env.KAFKA_GROUP_ID || 'emergency-response-app');
-if (process.env.KAFKA_TOPIC) {
-    app.set('kafka-message-topic', process.env.KAFKA_TOPIC.split(','));
+interface IParams {
+    name?: string,
+    id?: string
 }
 
-app.use(express.static(path.join(__dirname, 'client/build')));
+const app: FastifyInstance = fastify({logger: true, disableRequestLogging: true});
 
-app.use(
-    '/responder-service/*',
-    createProxyMiddleware({
-        target: app.get('responder-service'),
-        secure: false,
-        changeOrigin: true,
-        logLevel: 'debug',
-        pathRewrite: {
-            '^/responder-service': ''
-        }
-    })
-);
+const port: number = Number(process.env.PORT) || 8080;
 
-app.use(
-    '/disaster-simulator-service/*',
-    createProxyMiddleware({
-        target: app.get('disaster-simulator'),
-        secure: false,
-        changeOrigin: true,
-        logLevel: 'debug',
-        pathRewrite: {
-            '^/disaster-simulator-service': ''
-        }
-    })
-);
+const kafkaHost = process.env.KAFKA_HOST?.split(',');
+const groupId = process.env.KAFKA_GROUP_ID || 'emergency-response-app';
+const kafkaTopic = process.env.KAFKA_TOPIC?.split(',');
 
-app.use(
-    '/disaster-service/*',
-    createProxyMiddleware({
-        target: app.get('disaster-service'),
-        secure: false,
-        changeOrigin: true,
-        logLevel: 'debug',
-        pathRewrite: {
-            '^/disaster-service': ''
-        }
-    })
-);
+app.register(fastifyStatic, {
+    root: path.join(__dirname, 'client/build')
+});
 
-app.get('/mission-service/mission/:id', (req, res) => {
-    let mission: Mission | null = MissionService.get(req.params.id);
+//Provides a health endpoint to check
+app.register(require('./plugins/health'), {
+    options: {}
+});
+
+const responderServiceUrl = process.env.RESPONDER_SERVICE;
+app.register(fastifyHttpProxy, {
+    upstream: responderServiceUrl!,
+    prefix: '/responder-service'
+});
+
+const disasterSimulatorServiceUrl = process.env.DISASTER_SIMULATOR;
+app.register(fastifyHttpProxy, {
+    upstream: disasterSimulatorServiceUrl!,
+    prefix: '/disaster-simulator-service'
+});
+
+const disasterServiceUrl = process.env.DISASTER_SERVICE;
+app.register(fastifyHttpProxy, {
+    upstream: disasterServiceUrl!,
+    prefix: '/disaster-service'
+});
+
+app.get<{ Params: IParams }>('/mission-service/mission/:id', (request, reply) => {
+    let mission: Mission | null = MissionService.get(request.params.id!);
     if (mission === null) {
-        res.status(404).send('Mission not found');
+        reply.status(404).send('Mission not found');
     } else {
-        res.status(200).json(mission)
+        reply.status(200).send(mission)
     }
 });
 
-app.use(bodyParser.json());
-
-app.post('/mission-service/mission/:id', (req, res) => {
-    const responderLocation: Route = req.body;
-    MissionService.update(req.params.id, responderLocation);
+app.post<{ Params: IParams }>('/mission-service/mission/:id', (req, res) => {
+    const responderLocation: Route = req.body as Route;
+    MissionService.update(req.params.id!, responderLocation);
     res.status(204).send();
-    // TODO: error handling?
 });
 
-app.get('*', (req, res) => {
+app.get('/mission', (req, res) => {
     res.sendFile(path.join(__dirname + '/client/build/index.html'));
 });
 
 // setup kafka connection
 const kafka = new Kafka({
     logLevel: logLevel.INFO,
-    brokers: app.get('kafka-host'),
+    brokers: kafkaHost!,
     connectionTimeout: 3000
 });
-const consumer = kafka.consumer({ groupId: app.get('kafka-groupid') });
+const consumer = kafka.consumer({ groupId: groupId });
 
 const run = async () => {
-    console.log('Setting up Kafka client for ', app.get('kafka-host'));
+    console.log('Setting up Kafka client for ', kafkaHost);
     await consumer.connect();
 
-    app.get('kafka-message-topic').forEach((t: string) => {
+    kafkaTopic?.forEach((t: string) => {
         const run2 = async () => {
-            console.log('Setting up Kafka client for ', app.get('kafka-host'), 'on topic', t);
+            console.log('Setting up Kafka client for ', kafkaHost, 'on topic', t);
             await consumer.subscribe({ topic: t });
         }
         run2().catch(e => console.error(`[server.js] ${e.message}`, e))
@@ -130,7 +112,13 @@ const run = async () => {
 
 run().catch(e => console.error(`[server.js] ${e.message}`, e))
 
-// start express server on port 8080
-app.listen(app.get('port'), () => {
-    console.log('server started on port ' + app.get('port'));
-});
+const start = async () => {
+    app.log.info('starting server on port ' + port);
+    try {
+        await app.listen(port, '0.0.0.0');
+    } catch (err) {
+        app.log.error(err);
+        process.exit(1);
+    }
+}
+start();
