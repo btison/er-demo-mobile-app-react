@@ -7,6 +7,7 @@ import { KafkaMessage } from './cloudevents';
 import { ResponderService } from './services/responder-service';
 import { MissionService } from './services/mission-service';
 import { Mission, Route } from './services/mission-service/mission-service';
+import { DISASTER_SERVICE, DISASTER_SIMULATOR, HTTP_PORT, KAFKA_GROUP_ID, KAFKA_HOST, KAFKA_TOPICS, RESPONDER_SERVICE } from './config';
 
 interface IParams {
     name?: string,
@@ -14,12 +15,6 @@ interface IParams {
 }
 
 const app: FastifyInstance = fastify({logger: true, disableRequestLogging: true});
-
-const port: number = Number(process.env.PORT) || 8080;
-
-const kafkaHost = process.env.KAFKA_HOST?.split(',');
-const groupId = process.env.KAFKA_GROUP_ID || 'emergency-response-app';
-const kafkaTopic = process.env.KAFKA_TOPIC?.split(',');
 
 app.register(fastifyStatic, {
     root: path.join(__dirname, 'client/build')
@@ -30,19 +25,19 @@ app.register(require('./plugins/health'), {
     options: {}
 });
 
-const responderServiceUrl = process.env.RESPONDER_SERVICE;
+const responderServiceUrl = RESPONDER_SERVICE;
 app.register(fastifyHttpProxy, {
     upstream: responderServiceUrl!,
     prefix: '/responder-service'
 });
 
-const disasterSimulatorServiceUrl = process.env.DISASTER_SIMULATOR;
+const disasterSimulatorServiceUrl = DISASTER_SIMULATOR;
 app.register(fastifyHttpProxy, {
     upstream: disasterSimulatorServiceUrl!,
     prefix: '/disaster-simulator-service'
 });
 
-const disasterServiceUrl = process.env.DISASTER_SERVICE;
+const disasterServiceUrl = DISASTER_SERVICE;
 app.register(fastifyHttpProxy, {
     upstream: disasterServiceUrl!,
     prefix: '/disaster-service'
@@ -70,18 +65,18 @@ app.get('/mission', (req, res) => {
 // setup kafka connection
 const kafka = new Kafka({
     logLevel: logLevel.INFO,
-    brokers: kafkaHost!,
+    brokers: KAFKA_HOST,
     connectionTimeout: 3000
 });
-const consumer = kafka.consumer({ groupId: groupId });
+const consumer = kafka.consumer({ groupId: KAFKA_GROUP_ID });
 
 const run = async () => {
-    console.log('Setting up Kafka client for ', kafkaHost);
+    console.log('Setting up Kafka client for ', KAFKA_HOST);
     await consumer.connect();
 
-    kafkaTopic?.forEach((t: string) => {
+    KAFKA_TOPICS.forEach((t: string) => {
         const run2 = async () => {
-            console.log('Setting up Kafka client for ', kafkaHost, 'on topic', t);
+            console.log('Setting up Kafka client for ', KAFKA_HOST, 'on topic', t);
             await consumer.subscribe({ topic: t });
         }
         run2().catch(e => console.error(`[server.js] ${e.message}`, e))
@@ -113,9 +108,9 @@ const run = async () => {
 run().catch(e => console.error(`[server.js] ${e.message}`, e))
 
 const start = async () => {
-    app.log.info('starting server on port ' + port);
+    app.log.info('starting server on port ' + HTTP_PORT);
     try {
-        await app.listen(port, '0.0.0.0');
+        await app.listen(HTTP_PORT, '0.0.0.0');
     } catch (err) {
         app.log.error(err);
         process.exit(1);

@@ -1,7 +1,8 @@
 import axios, { AxiosError } from 'axios';
+import { RESPONDER_SERVICE } from '../../config';
 
 async function getById(id: string): Promise<Responder> {
-    const url = process.env.RESPONDER_SERVICE + `/responder/${id}`;
+    const url = RESPONDER_SERVICE + `/responder/${id}`;
     return axios.get<Responder>(url, {
         validateStatus: (status) => status < 500
     })

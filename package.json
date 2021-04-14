@@ -14,6 +14,7 @@
   "dependencies": {
     "axios": "^0.21.1",
     "cloudevents": "^4.0.0",
+    "env-var": "^7.0.0",
     "fastify": "^3.14.2",
     "fastify-http-proxy": "^5.0.0",
     "fastify-plugin": "^3.0.0",
