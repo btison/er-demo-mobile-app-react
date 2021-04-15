@@ -7,14 +7,15 @@ import { KafkaMessage } from './cloudevents';
 import { ResponderService } from './services/responder-service';
 import { MissionService } from './services/mission-service';
 import { Mission, Route } from './services/mission-service/mission-service';
-import { DISASTER_SERVICE, DISASTER_SIMULATOR, HTTP_PORT, KAFKA_GROUP_ID, KAFKA_HOST, KAFKA_TOPICS, RESPONDER_SERVICE } from './config';
+import { DISASTER_SERVICE, DISASTER_SIMULATOR, HTTP_PORT, KAFKA_GROUP_ID, KAFKA_HOST, KAFKA_TOPICS, NODE_ENV, RESPONDER_SERVICE } from './config';
+import log from './log';
 
 interface IParams {
     name?: string,
     id?: string
 }
 
-const app: FastifyInstance = fastify({logger: true, disableRequestLogging: true});
+const app: FastifyInstance = fastify({ logger: NODE_ENV === 'dev', disableRequestLogging: true });
 
 app.register(fastifyStatic, {
     root: path.join(__dirname, 'client/build')
@@ -71,15 +72,15 @@ const kafka = new Kafka({
 const consumer = kafka.consumer({ groupId: KAFKA_GROUP_ID });
 
 const run = async () => {
-    console.log('Setting up Kafka client for ', KAFKA_HOST);
+    log.info(`Setting up Kafka client for ${KAFKA_HOST}`);
     await consumer.connect();
 
     KAFKA_TOPICS.forEach((t: string) => {
         const run2 = async () => {
-            console.log('Setting up Kafka client for ', KAFKA_HOST, 'on topic', t);
+            log.info(`Setting up Kafka client on topic ${t}`);
             await consumer.subscribe({ topic: t });
         }
-        run2().catch(e => console.error(`[server.js] ${e.message}`, e))
+        run2().catch(e => log.error(`[server.js] ${e.message}`, e));
     });
 
     await consumer.run({
@@ -91,28 +92,28 @@ const run = async () => {
                     let responderId = mission.responderId as string;
                     ResponderService.isPerson(responderId).then((bool) => {
                         if (bool) {
-                            console.log(`Responder with id ${responderId} is a person`);
+                            log.debug(`Responder with id ${responderId} is a person`);
                             MissionService.put(mission);
                         }
                     });
                 }
             } catch (err) {
-                console.error(`Error when transforming incoming message to CloudEvent. ${err.message}`, err);
-                console.error('    Topic: ', topic);
-                console.error('    Message:', message);
+                log.error(`Error when transforming incoming message to CloudEvent. ${err.message}`, err);
+                log.error('    Topic: ', topic);
+                log.error('    Message:', message);
             }
         },
     })
 };
 
-run().catch(e => console.error(`[server.js] ${e.message}`, e))
+run().catch(e => log.error(`[server.js] ${e.message}`, e));
 
 const start = async () => {
-    app.log.info('starting server on port ' + HTTP_PORT);
+    log.info(`starting server on port ${HTTP_PORT}`);
     try {
         await app.listen(HTTP_PORT, '0.0.0.0');
     } catch (err) {
-        app.log.error(err);
+        log.error(err);
         process.exit(1);
     }
 }
