@@ -77,6 +77,7 @@ class App extends React.Component<MyProps, MyState> {
                                             simulationDistanceBase={Number((window as any)['_env'].simulationDistanceBase)}
                                             simulationDistanceVariation={Number((window as any)['_env'].simulationDistanceVariation)}
                                             simulationDelay={Number((window as any)['_env'].simulationDelay)}
+                                            hostname={(window as any).location.hostname}
                                         />
                                     </Route>
                                     <Route exact path="/">

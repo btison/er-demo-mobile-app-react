@@ -18,6 +18,7 @@ import ShelterComponent from './shelters';
 import IncidentComponent from './incident';
 import ResponderComponent from './responder';
 import './mission.css';
+import { Dispatcher, SocketService } from '../socket-service';
 
 interface Props {
     userProfile: Keycloak.KeycloakProfile
@@ -25,6 +26,7 @@ interface Props {
     simulationDistanceBase: number
     simulationDelay: number
     simulationDistanceVariation: number
+    hostname: string
 }
 
 const MissionComponent = (props: Props) => {
@@ -146,6 +148,15 @@ const MissionComponent = (props: Props) => {
             }
         };
 
+        const dispatcher: Dispatcher = {
+            dispatch: (type: string, data: any) => {
+                switch (type) {
+                    case 'connection-status':
+                        break;
+                }
+            }
+        };
+
         getDisasterCenter().then((center) => {
             setViewport(new WebMercatorViewport({ width: 0, height: 0, latitude: center.lat, longitude: center.lon, zoom: center.zoom }));
         });
@@ -165,8 +176,9 @@ const MissionComponent = (props: Props) => {
                 setResponder(responder);
                 setResponderLocation(Location.of(responder.latitude as number, responder.longitude as number));
             }
+            SocketService.connect(props.hostname, dispatcher, responder);
         });
-    }, [props.userProfile, DEFAULT_CENTER, props.simulationDistanceBase, props.simulationDistanceVariation, Toast]);
+    }, [props.userProfile, DEFAULT_CENTER, props.simulationDistanceBase, props.simulationDistanceVariation, props.hostname, Toast]);
 
     const buttonDisabled = (): boolean => {
         if (button === BUTTON_AVAILABLE) {
