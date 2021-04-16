@@ -7,8 +7,11 @@ import { KafkaMessage } from './cloudevents';
 import { ResponderService } from './services/responder-service';
 import { MissionService } from './services/mission-service';
 import { Mission, Route } from './services/mission-service/mission-service';
-import { DISASTER_SERVICE, DISASTER_SIMULATOR, HTTP_PORT, KAFKA_GROUP_ID, KAFKA_HOST, KAFKA_TOPICS, NODE_ENV, RESPONDER_SERVICE } from './config';
+import { DISASTER_SERVICE, DISASTER_SIMULATOR, HTTP_PORT, KAFKA_GROUP_ID, KAFKA_HOST, KAFKA_TOPICS, NODE_ENV, RESPONDER_SERVICE, WS_HEARTBEAT_INTERVAL, WS_MAX_PAYLOAD } from './config';
 import log from './log';
+import { ServerOptions } from 'ws';
+import { WebsocketPluginOptions } from 'fastify-websocket';
+import { heartbeat } from './sockets';
 
 interface IParams {
     name?: string,
@@ -63,6 +66,18 @@ app.get('/mission', (req, res) => {
     res.sendFile(path.join(__dirname + '/client/build/index.html'));
 });
 
+app.register(require('fastify-websocket'), {
+    options: {
+        maxPayload: WS_MAX_PAYLOAD,
+        verifyClient: (info, next) => {
+            // Can add optional verification logic into this block
+            next(true);
+        }
+    } as ServerOptions
+} as WebsocketPluginOptions);
+
+app.register(require('./plugins/ws'));
+
 // setup kafka connection
 const kafka = new Kafka({
     logLevel: logLevel.INFO,
@@ -112,6 +127,7 @@ const start = async () => {
     log.info(`starting server on port ${HTTP_PORT}`);
     try {
         await app.listen(HTTP_PORT, '0.0.0.0');
+        heartbeat(WS_HEARTBEAT_INTERVAL);
     } catch (err) {
         log.error(err);
         process.exit(1);

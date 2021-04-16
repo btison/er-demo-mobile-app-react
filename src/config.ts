@@ -22,7 +22,16 @@ const config = {
   RESPONDER_SERVICE: get('RESPONDER_SERVICE').asString(),
   DISASTER_SIMULATOR: get('DISASTER_SIMULATOR').asString(),
   DISASTER_SERVICE: get('DISASTER_SERVICE').asString(),
-  RESPONDER_SIMULATOR: get('RESPONDER_SIMULATOR').asString()
+  RESPONDER_SIMULATOR: get('RESPONDER_SIMULATOR').asString(),
+
+  // Reject web socket payloads greater than this many bytes (2KB by default)
+  WS_MAX_PAYLOAD: get('WS_MAX_PAYLOAD').default(2048).asIntPositive(),
+
+  // Send a heartbeat to clients every so often to keep connections open
+  WS_HEARTBEAT_INTERVAL: get('WS_HEARTBEAT_INTERVAL').default('15000').asIntPositive(),
+
+  // If a player action is not received within this time we close their socket (5 min default)
+  WS_ACTIVITY_TIMEOUT_MS: get('WS_ACTIVITY_TIMEOUT_MS').default(5 * 60 * 1000).asIntPositive(),
 };
 
 export = config;

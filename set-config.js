@@ -12,6 +12,7 @@ doReplace('accessToken', process.env.TOKEN);
 doReplace('simulationDistanceBase', process.env.SIMULATION_DISTANCE_BASE || '750');
 doReplace('simulationDistanceVariation', process.env.SIMULATION_DISTANCE_VAR || '0.2');
 doReplace('simulationDelay', process.env.SIMULATION_DELAY || '5000');
+doReplace('env', process.env.NODE_ENV || 'dev');
 
 function doReplace(key, value) {
   const regex = key + ' = \'.*\'';
