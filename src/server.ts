@@ -11,7 +11,7 @@ import { DISASTER_SERVICE, DISASTER_SIMULATOR, HTTP_PORT, KAFKA_GROUP_ID, KAFKA_
 import log from './log';
 import { ServerOptions } from 'ws';
 import { WebsocketPluginOptions } from 'fastify-websocket';
-import { heartbeat } from './sockets';
+import { SocketService } from './sockets';
 
 interface IParams {
     name?: string,
@@ -109,6 +109,7 @@ const run = async () => {
                         if (bool) {
                             log.debug(`Responder with id ${responderId} is a person`);
                             MissionService.put(mission);
+                            SocketService.sendMission(responderId, mission);
                         }
                     });
                 }
@@ -127,7 +128,7 @@ const start = async () => {
     log.info(`starting server on port ${HTTP_PORT}`);
     try {
         await app.listen(HTTP_PORT, '0.0.0.0');
-        heartbeat(WS_HEARTBEAT_INTERVAL);
+        SocketService.heartbeat(WS_HEARTBEAT_INTERVAL);
     } catch (err) {
         log.error(err);
         process.exit(1);

@@ -3,6 +3,7 @@ import { ConnectionRequestPayload, IncomingMsgType, OutgoingMsgType, WsOutgoingP
 import SocketDataContainer from "./socket-container";
 import { v4 as uuid } from "uuid";
 import { getSocketDataContainerByResponder } from "./sockets";
+import { Mission } from "../services/mission-service/mission-service";
 
 type MessageHandlersContainer = {
     [key in IncomingMsgType]: {
@@ -57,4 +58,19 @@ export class HandlerNotFoundError extends Error {
     constructor(public type: string) {
         super();
     }
+}
+
+export async function sendMission(responder: string, mission: Mission) {
+    log.debug('sending mission for responder ' + responder);
+    let sdc = getSocketDataContainerByResponder(responder);
+    if (sdc === null) {
+        console.warn('no socketdatacontainer found for responder ' + responder);
+    } else {
+
+        sdc.send({
+            id: uuid(),
+            type: OutgoingMsgType.MissionAssigned,
+            data: mission
+        });
+    };
 }

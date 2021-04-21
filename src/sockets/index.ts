@@ -3,6 +3,26 @@ import log from '../log';
 import { OutgoingMsgType } from './payloads';
 import { deleteSocketDataContainer, getAllSocketDataContainers, getSocketDataContainer } from './sockets';
 import { v4 as uuid } from "uuid";
+import { Mission } from '../services/mission-service/mission-service';
+import { sendMission } from './handlers';
+
+export interface ISocketService {
+    heartbeat: IHeartBeat;
+    sendMission: ISendMission;
+}
+
+export interface IHeartBeat {
+    (interval: number): void
+}
+
+export interface ISendMission {
+    (responderId: string, mission: Mission): void
+}
+
+export const SocketService: ISocketService = {
+    heartbeat: heartbeat as IHeartBeat,
+    sendMission: sendMission as ISendMission
+}
 
 export function configureSocket(ws: WebSocket) {
     const container = getSocketDataContainer(ws);
@@ -15,7 +35,7 @@ export function configureSocket(ws: WebSocket) {
     });
 }
 
-export function heartbeat(interval: number) {
+async function heartbeat(interval: number) {
     const clients = getAllSocketDataContainers();
 
     if (clients.size > 0) {

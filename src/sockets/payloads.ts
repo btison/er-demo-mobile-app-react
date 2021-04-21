@@ -16,7 +16,8 @@ export enum IncomingMsgType {
 
 export enum OutgoingMsgType {
     ConnectionStatus = 'connection-status',
-    Heartbeat = 'heartbeat'
+    Heartbeat = 'heartbeat',
+    MissionAssigned = 'mission-assigned'
 }
 
 export type ConnectionRequestPayload = {
