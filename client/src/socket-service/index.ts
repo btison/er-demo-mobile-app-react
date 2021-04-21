@@ -45,9 +45,11 @@ function connect(hostname: string, dispatcher: Dispatcher, responder: Responder)
             case 'connection-status':
                 dispatcher.dispatch(message.type, data);
                 break;
+            case 'mission-assigned':
+                dispatcher.dispatch(message.type, data);
+                break;
         }
     }
-
 }
 
 function sendConnectionFrame(responder: Responder) {

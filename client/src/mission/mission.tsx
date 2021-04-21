@@ -19,6 +19,7 @@ import IncidentComponent from './incident';
 import ResponderComponent from './responder';
 import './mission.css';
 import { Dispatcher, SocketService } from '../socket-service';
+import { Deque } from '@blakeembrey/deque';
 
 interface Props {
     userProfile: Keycloak.KeycloakProfile
@@ -44,11 +45,36 @@ const MissionComponent = (props: Props) => {
     const [waitingOnMission, setWaitingOnMission] = useState<boolean>(false);
     const [pickedup, setPickedup] = useState<boolean>(false);
     const [mission, setMission] = useState<Mission | null>(null);
+    const [waitingOnConnection, setWaitingOnConnection] = useState<boolean>(true);
 
     const responderService = new ResponderService();
     const missionService = new MissionService();
 
     const Toast = useToast();
+
+    const simulateResponderInterval: IntervalHookResult = useInterval(() => {
+        console.log('responder interval')
+        if (mission === null) {
+            return;
+        }
+        Route.nextLocation(mission!.route);
+        Route.moveToNextLocation(mission!.route);
+        setResponderLocation(Location.of(mission!.route.currentLocation.lat, mission!.route.currentLocation.lon));
+        missionService.update(responder.id, mission!.route);
+        if (mission?.route.status === 'WAITING') {
+            simulateResponderInterval.stop();
+            setButton(BUTTON_PICKED_UP);
+        }
+        if (mission?.route.status === 'DROPPED') {
+            setMission(null);
+            setPickedup(false);
+            responder.enrolled = false;
+            responder.available = true;
+            setResponder(responder);
+            setButton(BUTTON_AVAILABLE);
+            simulateResponderInterval.stop();
+        }
+    }, props.simulationDelay, { autoStart: false });
 
     useEffect(() => {
         const DEFAULT_PHONE_NUMBER = '111-222-333';
@@ -58,6 +84,8 @@ const MissionComponent = (props: Props) => {
         const responderService = new ResponderService();
         const disasterSimulatorService = new DisasterSimulatorService();
         const disasterService = new DisasterService();
+
+        let distanceUnit: number;
 
         const getResponder = async (): Promise<Responder> => {
             const responderName = `${props.userProfile.firstName} ${props.userProfile.lastName}`;
@@ -152,6 +180,22 @@ const MissionComponent = (props: Props) => {
             dispatch: (type: string, data: any) => {
                 switch (type) {
                     case 'connection-status':
+                        setWaitingOnConnection(false);
+                        break;
+
+                    case 'mission-assigned':
+                        const mission = new Mission();
+                        mission.id = data.id;
+                        mission.incidentLocation = Location.of(data.incidentLat, data.incidentLong);
+                        mission.route = new Route();
+                        mission.route.currentLocation = Location.of(data.responderStartLat, data.responderStartLong)
+                        mission.route.route = new Deque(data.steps);
+
+                        mission.route.distanceUnit = distanceUnit!;
+                        console.log('distance unit = ' + distanceUnit)
+                        setMission(mission);
+                        setWaitingOnMission(false);
+                        Toast.success('You have been assigned a mission').present();
                         break;
                 }
             }
@@ -162,7 +206,8 @@ const MissionComponent = (props: Props) => {
         });
         getShelters().then((shelters) => setShelters(shelters));
         getResponder().then((responder) => {
-            responder.distanceUnit = Utils.random(props.simulationDistanceBase, props.simulationDistanceBase * (1 + props.simulationDistanceVariation));
+            distanceUnit = Utils.random(props.simulationDistanceBase, props.simulationDistanceBase * (1 + props.simulationDistanceVariation));
+            responder.distanceUnit = distanceUnit;
             if (responder.latitude == null || responder.latitude === 0) {
                 generateLocation().then((location) => {
                     if (location) {
@@ -180,9 +225,17 @@ const MissionComponent = (props: Props) => {
         });
     }, [props.userProfile, DEFAULT_CENTER, props.simulationDistanceBase, props.simulationDistanceVariation, props.hostname, Toast]);
 
+    useEffect(() => {
+        console.log('mission state has changed');
+        if (mission != null && mission.route.status === 'CREATED') {
+            console.log('starting simulate responder interval');
+            simulateResponderInterval.start();
+        }
+    }, [mission, simulateResponderInterval]);
+
     const buttonDisabled = (): boolean => {
         if (button === BUTTON_AVAILABLE) {
-            return (responderLocation.lat === 0 || waitingOnMission || (responder.available === true && responder.enrolled === true))
+            return (responderLocation.lat === 0 || waitingOnConnection || waitingOnMission || (responder.available === true && responder.enrolled === true))
         }
         if (button === BUTTON_PICKED_UP) {
             return (pickedup === true || mission === null);
@@ -210,43 +263,9 @@ const MissionComponent = (props: Props) => {
         }
     };
 
-    const getMissionInterval: IntervalHookResult = useInterval(() => {
-        missionService.get(responder.id).then((mission) => {
-            if (mission !== null) {
-                mission.route.distanceUnit = responder.distanceUnit!;
-                setMission(mission);
-                setWaitingOnMission(false);
-                Toast.success('You have been assigned a mission').present();
-                getMissionInterval.stop();
-                simulateResponderInterval.start();
-            }
-        });
-    }, 2000, { autoStart: false });
-
-    const simulateResponderInterval: IntervalHookResult = useInterval(() => {
-        Route.nextLocation(mission!.route);
-        Route.moveToNextLocation(mission!.route);
-        setResponderLocation(Location.of(mission!.route.currentLocation.lat, mission!.route.currentLocation.lon));
-        missionService.update(responder.id, mission!.route);
-        if (mission?.route.status === 'WAITING') {
-            simulateResponderInterval.stop();
-            setButton(BUTTON_PICKED_UP);
-        }
-        if (mission?.route.status === 'DROPPED') {
-            simulateResponderInterval.stop();
-            setMission(null);
-            setPickedup(false);
-            responder.enrolled = false;
-            responder.available = true;
-            setResponder(responder);
-            setButton(BUTTON_AVAILABLE);
-        }
-    }, props.simulationDelay, { autoStart: false });
-
     const waitOnMission = () => {
         setWaitingOnMission(true);
         Toast.create({ message: 'Waiting to receive a rescue mission', color: 'primary' }).present();
-        getMissionInterval.start();
     };
 
     return (
