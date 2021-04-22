@@ -1,3 +1,5 @@
+import { Responder } from "../services/responder-service/responder-service";
+
 export type WsIncomingPayload = {
     id: string;
     type: IncomingMsgType;
@@ -11,7 +13,8 @@ export type WsOutgoingPayload = {
 };
 
 export enum IncomingMsgType {
-    Connection = 'connection'
+    Connection = 'connection',
+    ResponderAvailable = 'responder-available'
 }
 
 export enum OutgoingMsgType {
@@ -22,4 +25,8 @@ export enum OutgoingMsgType {
 
 export type ConnectionRequestPayload = {
     responderId: string;
+};
+
+export type ResponderAvailablePayload = {
+    responder: Responder;
 };

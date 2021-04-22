@@ -47,7 +47,6 @@ const MissionComponent = (props: Props) => {
     const [mission, setMission] = useState<Mission | null>(null);
     const [waitingOnConnection, setWaitingOnConnection] = useState<boolean>(true);
 
-    const responderService = new ResponderService();
     const missionService = new MissionService();
 
     const Toast = useToast();
@@ -249,10 +248,8 @@ const MissionComponent = (props: Props) => {
             responder.available = true;
             responder.latitude = responderLocation.lat;
             responder.longitude = responderLocation.lon;
-            responderService.update(responder)
-                .then(() => {
-                    waitOnMission();
-                });
+            SocketService.available(responder);
+            waitOnMission();
         }
         if (button === BUTTON_PICKED_UP) {
             mission!.route.status = 'PICKEDUP';

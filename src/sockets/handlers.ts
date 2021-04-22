@@ -1,9 +1,10 @@
 import log from "../log";
-import { ConnectionRequestPayload, IncomingMsgType, OutgoingMsgType, WsOutgoingPayload, WsIncomingPayload } from "./payloads";
+import { ConnectionRequestPayload, IncomingMsgType, OutgoingMsgType, WsOutgoingPayload, WsIncomingPayload, ResponderAvailablePayload } from "./payloads";
 import SocketDataContainer from "./socket-container";
 import { v4 as uuid } from "uuid";
 import { getSocketDataContainerByResponder } from "./sockets";
 import { Mission } from "../services/mission-service/mission-service";
+import { ResponderService } from "../services/responder-service";
 
 type MessageHandlersContainer = {
     [key in IncomingMsgType]: {
@@ -37,9 +38,17 @@ const connectionHandler: any = async (container: SocketDataContainer, data: Conn
     });
 };
 
+const availableHandler: any = (container: SocketDataContainer, data: ResponderAvailablePayload) => {
+    log.debug('Received responder available message: ' + JSON.stringify(data));
+    ResponderService.update(data.responder);
+};
+
 const MessageHandlers: MessageHandlersContainer = {
     [IncomingMsgType.Connection]: {
         fn: connectionHandler
+    },
+    [IncomingMsgType.ResponderAvailable]: {
+        fn: availableHandler
     }
 };
 

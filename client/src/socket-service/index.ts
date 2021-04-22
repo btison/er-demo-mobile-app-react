@@ -3,14 +3,20 @@ import { v4 as uuid } from 'uuid';
 
 export interface ISocketService {
     connect: IConnect;
+    available: IAvailable;
 }
 
 export interface IConnect {
     (hostname: string, dispatcher: Dispatcher, responder: Responder): void
 }
 
+export interface IAvailable {
+    (responder: Responder): void
+}
+
 export const SocketService: ISocketService = {
-    connect: connect as IConnect
+    connect: connect as IConnect,
+    available: sendAvailable as IAvailable
 }
 
 export interface Dispatcher {
@@ -61,6 +67,20 @@ function sendConnectionFrame(responder: Responder) {
         id: uuid(),
         type: 'connection',
         data: { responderId: responder.id }
+    };
+
+    socket.send(JSON.stringify(message));
+}
+
+function sendAvailable(responder: Responder) {
+    if (!socket) {
+        return;
+    }
+
+    const message = {
+        id: uuid(),
+        type: 'responder-available',
+        data: { responder: responder }
     };
 
     socket.send(JSON.stringify(message));
