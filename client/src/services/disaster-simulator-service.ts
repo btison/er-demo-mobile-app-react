@@ -1,19 +1,27 @@
 import axios, { AxiosError } from 'axios';
 import { Location } from '../models/location'
 
-export class DisasterSimulatorService {
+export interface IDisasterSimulatorService {
+    generateLocation: IGenerateLocation
+}
 
-    async generateLocation(): Promise<Location> {
-        const url = `disaster-simulator-service/g/location`;
-        return axios.post<Location>(url)
-            .then((response) => {
-                return response.data;
-            })
-            .catch(ex => this.handleError('Error generating location', ex));
-    }
+export interface IGenerateLocation {
+    (): Promise<Location>
+}
 
-    private handleError(message: string, error: AxiosError): Promise<any> {
-        throw new Error(message)
-    }
+export const DisasterSimulatorService: IDisasterSimulatorService = {
+    generateLocation: generateLocation as IGenerateLocation
+}
 
+async function generateLocation(): Promise<Location> {
+    const url = `disaster-simulator-service/g/location`;
+    return axios.post<Location>(url)
+        .then((response) => {
+            return response.data;
+        })
+        .catch(ex => handleError('Error generating location', ex));
+}
+
+async function handleError(message: string, error: AxiosError): Promise<any> {
+    throw new Error(message)
 }

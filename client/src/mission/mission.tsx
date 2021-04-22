@@ -45,7 +45,7 @@ const MissionComponent = (props: Props) => {
     const [pickedup, setPickedup] = useState<boolean>(false);
     const [mission, setMission] = useState<Mission | null>(null);
     const [waitingOnConnection, setWaitingOnConnection] = useState<boolean>(true);
-    
+
     const Toast = useToast();
 
     const simulateResponderInterval: IntervalHookResult = useInterval(() => {
@@ -76,16 +76,12 @@ const MissionComponent = (props: Props) => {
         const DEFAULT_BOAT_CAPACITY = 12;
         const DEFAULT_MEDICAL_KIT = true;
 
-        const responderService = new ResponderService();
-        const disasterSimulatorService = new DisasterSimulatorService();
-        const disasterService = new DisasterService();
-
         let distanceUnit: number;
 
         const getResponder = async (): Promise<Responder> => {
             const responderName = `${props.userProfile.firstName} ${props.userProfile.lastName}`;
             try {
-                let responder = await responderService.getByName(responderName);
+                let responder = await ResponderService.getByName(responderName);
                 if (responder.id === "0") {
                     Toast.create({ message: 'Registering as new responder', color: 'primary' }).present();
                     responder = await registerResponder(true);
@@ -129,12 +125,12 @@ const MissionComponent = (props: Props) => {
                     responder.medicalKit = DEFAULT_MEDICAL_KIT;
                 }
             }
-            return responderService.create(responder, getResponder);
+            return ResponderService.create(responder, getResponder);
         };
 
         const generateLocation = async (): Promise<Location | null> => {
             try {
-                return disasterSimulatorService.generateLocation();
+                return DisasterSimulatorService.generateLocation();
             } catch (e) {
                 if (e instanceof Error) {
                     Toast.error(e.message).present();
@@ -147,7 +143,7 @@ const MissionComponent = (props: Props) => {
 
         const getDisasterCenter = async (): Promise<DisasterCenter> => {
             try {
-                return disasterService.getDisasterCenter();
+                return DisasterService.disasterCenter();
             } catch (e) {
                 if (e instanceof Error) {
                     Toast.error(e.message).present();
@@ -160,7 +156,7 @@ const MissionComponent = (props: Props) => {
 
         const getShelters = async (): Promise<Shelter[]> => {
             try {
-                return disasterService.getShelters();
+                return DisasterService.shelters();
             } catch (e) {
                 if (e instanceof Error) {
                     Toast.error(e.message).present();
