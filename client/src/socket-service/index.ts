@@ -1,9 +1,11 @@
 import { Responder } from "../models/responder";
 import { v4 as uuid } from 'uuid';
+import { MissionStep, Route } from "../models/mission";
 
 export interface ISocketService {
     connect: IConnect;
     available: IAvailable;
+    updateLocation: IUpdateLocation;
 }
 
 export interface IConnect {
@@ -14,9 +16,14 @@ export interface IAvailable {
     (responder: Responder): void
 }
 
+export interface IUpdateLocation {
+    (id: string, route: Route): void
+}
+
 export const SocketService: ISocketService = {
     connect: connect as IConnect,
-    available: sendAvailable as IAvailable
+    available: sendAvailable as IAvailable,
+    updateLocation: updateLocation as IUpdateLocation
 }
 
 export interface Dispatcher {
@@ -81,6 +88,24 @@ function sendAvailable(responder: Responder) {
         id: uuid(),
         type: 'responder-available',
         data: { responder: responder }
+    };
+
+    socket.send(JSON.stringify(message));
+}
+
+function updateLocation(id: string, route: Route) {
+    if (!socket) {
+        return;
+    }
+
+    const message = {
+        id: uuid(),
+        type: 'location-update',
+        data: {
+            currentLocation: { lat: route.currentLocation.lat, lon: route.currentLocation.lon },
+            waiting: route.waiting, status: route.status,
+            route: Array.from<MissionStep>(route.route.values()).map((m: MissionStep) => ({ destination: m.destination, waypoint: m.wayPoint, lat: m.lat, lon: m.lon }))
+        }
     };
 
     socket.send(JSON.stringify(message));

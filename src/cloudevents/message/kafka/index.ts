@@ -1,5 +1,6 @@
 import { CloudEvent, CloudEventV03, CloudEventV1, CONSTANTS, Mode, ValidationError, Version } from 'cloudevents';
 import { Message, Headers } from '..';
+import log from '../../../log';
 import { isBufferOrStringOrObjectOrThrow } from '../../event/validation';
 import { JSONParser, MappedParser, parserByContentType } from '../../parsers';
 import { sanitize, v1binaryParsers, v03structuredParsers, v1structuredParsers } from './headers';
@@ -9,7 +10,7 @@ export function deserialize(message: Message): CloudEvent {
     const mode = getMode(cleanHeaders);
     let version = getVersion(mode, cleanHeaders, message.body as Buffer);
     if (version !== Version.V03 && version !== Version.V1) {
-        console.error(`Unknown spec version ${version}. Default to ${Version.V1}`);
+        log.error(`Unknown spec version ${version}. Default to ${Version.V1}`);
         version = Version.V1;
     }
     switch (mode) {

@@ -1,3 +1,4 @@
+import log from "../../log";
 import { ResponderSimulatorService } from "../responder-simulator";
 
 const missions = new Map<string, Mission>();
@@ -24,6 +25,7 @@ function remove(id: string): void {
 
 export function update(id: string, route: Route): void {
     if (missions.has(id)) {
+        log.debug('Updating mission ' + id + ': ' + JSON.stringify(route));
         const mission = missions.get(id);
         mission!.responderLocation = route;
         if (route.status === 'DROPPED') {
@@ -31,7 +33,7 @@ export function update(id: string, route: Route): void {
         }
         ResponderSimulatorService.update(mission!.id, route);
     } else {
-        console.warn(`Mission with id ${id} not found`);
+        log.warn(`Mission with id ${id} not found`);
     }
 }
 

@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import { RESPONDER_SIMULATOR } from '../../config';
+import log from '../../log';
 import { Route } from '../mission-service/mission-service';
 
 export async function updateResponderLocation(id: string, route: Route): Promise<void> {
@@ -11,6 +12,6 @@ export async function updateResponderLocation(id: string, route: Route): Promise
 }
 
 async function handleError(message: string, error: AxiosError): Promise<any> {
-    console.error(`${message} ${error.message}`);
+    log.error(`${message} ${error.message}`);
     throw new Error(message)
 }

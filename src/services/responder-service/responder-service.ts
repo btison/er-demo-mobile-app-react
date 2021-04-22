@@ -40,7 +40,7 @@ export async function update(responder: Responder): Promise<void> {
 }
 
 async function handleError(message: string, error: AxiosError): Promise<any> {
-    console.error(`${message} ${error.message}`);
+    log.error(`${message} ${error.message}`);
     throw new Error(message)
 }
 

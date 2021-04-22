@@ -14,7 +14,8 @@ export type WsOutgoingPayload = {
 
 export enum IncomingMsgType {
     Connection = 'connection',
-    ResponderAvailable = 'responder-available'
+    ResponderAvailable = 'responder-available',
+    LocationUpdate = 'location-update'
 }
 
 export enum OutgoingMsgType {
@@ -29,4 +30,11 @@ export type ConnectionRequestPayload = {
 
 export type ResponderAvailablePayload = {
     responder: Responder;
+};
+
+export type LocationUpdatePayload = {
+    currentLocation: any;
+    waiting: boolean;
+    status: string;
+    route: any;
 };

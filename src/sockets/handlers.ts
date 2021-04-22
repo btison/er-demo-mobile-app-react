@@ -1,10 +1,11 @@
 import log from "../log";
-import { ConnectionRequestPayload, IncomingMsgType, OutgoingMsgType, WsOutgoingPayload, WsIncomingPayload, ResponderAvailablePayload } from "./payloads";
+import { ConnectionRequestPayload, IncomingMsgType, OutgoingMsgType, WsOutgoingPayload, WsIncomingPayload, ResponderAvailablePayload, LocationUpdatePayload } from "./payloads";
 import SocketDataContainer from "./socket-container";
 import { v4 as uuid } from "uuid";
 import { getSocketDataContainerByResponder } from "./sockets";
 import { Mission } from "../services/mission-service/mission-service";
 import { ResponderService } from "../services/responder-service";
+import { MissionService } from "../services/mission-service";
 
 type MessageHandlersContainer = {
     [key in IncomingMsgType]: {
@@ -43,12 +44,20 @@ const availableHandler: any = (container: SocketDataContainer, data: ResponderAv
     ResponderService.update(data.responder);
 };
 
+const updateMissionHandler: any = async (container: SocketDataContainer, data: LocationUpdatePayload) => {
+    log.debug('Received location update message: ' + JSON.stringify(data));
+    MissionService.update(container.getResponderId(), data);
+};
+
 const MessageHandlers: MessageHandlersContainer = {
     [IncomingMsgType.Connection]: {
         fn: connectionHandler
     },
     [IncomingMsgType.ResponderAvailable]: {
         fn: availableHandler
+    },
+    [IncomingMsgType.LocationUpdate]: {
+        fn: updateMissionHandler
     }
 };
 
@@ -73,7 +82,7 @@ export async function sendMission(responder: string, mission: Mission) {
     log.debug('sending mission for responder ' + responder);
     let sdc = getSocketDataContainerByResponder(responder);
     if (sdc === null) {
-        console.warn('no socketdatacontainer found for responder ' + responder);
+        log.warn('no socketdatacontainer found for responder ' + responder);
     } else {
 
         sdc.send({

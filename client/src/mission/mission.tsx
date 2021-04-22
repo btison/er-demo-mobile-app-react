@@ -9,7 +9,6 @@ import { Shelter } from '../models/shelter';
 import { Mission, Route } from '../models/mission';
 import { ResponderService } from '../services/responder-service';
 import { DisasterSimulatorService } from '../services/disaster-simulator-service';
-import { MissionService } from '../services/mission-service';
 import { DisasterService } from '../services/disaster-service';
 import { IntervalHookResult, useInterval } from "react-interval-hook";
 import { Utils } from "../utils";
@@ -46,20 +45,17 @@ const MissionComponent = (props: Props) => {
     const [pickedup, setPickedup] = useState<boolean>(false);
     const [mission, setMission] = useState<Mission | null>(null);
     const [waitingOnConnection, setWaitingOnConnection] = useState<boolean>(true);
-
-    const missionService = new MissionService();
-
+    
     const Toast = useToast();
 
     const simulateResponderInterval: IntervalHookResult = useInterval(() => {
-        console.log('responder interval')
         if (mission === null) {
             return;
         }
         Route.nextLocation(mission!.route);
         Route.moveToNextLocation(mission!.route);
         setResponderLocation(Location.of(mission!.route.currentLocation.lat, mission!.route.currentLocation.lon));
-        missionService.update(responder.id, mission!.route);
+        SocketService.updateLocation(responder.id, mission!.route);
         if (mission?.route.status === 'WAITING') {
             simulateResponderInterval.stop();
             setButton(BUTTON_PICKED_UP);
@@ -191,7 +187,6 @@ const MissionComponent = (props: Props) => {
                         mission.route.route = new Deque(data.steps);
 
                         mission.route.distanceUnit = distanceUnit!;
-                        console.log('distance unit = ' + distanceUnit)
                         setMission(mission);
                         setWaitingOnMission(false);
                         Toast.success('You have been assigned a mission').present();
@@ -225,9 +220,7 @@ const MissionComponent = (props: Props) => {
     }, [props.userProfile, DEFAULT_CENTER, props.simulationDistanceBase, props.simulationDistanceVariation, props.hostname, Toast]);
 
     useEffect(() => {
-        console.log('mission state has changed');
         if (mission != null && mission.route.status === 'CREATED') {
-            console.log('starting simulate responder interval');
             simulateResponderInterval.start();
         }
     }, [mission, simulateResponderInterval]);
@@ -255,7 +248,7 @@ const MissionComponent = (props: Props) => {
             mission!.route.status = 'PICKEDUP';
             mission!.route.waiting = false;
             setPickedup(true);
-            missionService.update(responder.id, mission!.route);
+            SocketService.updateLocation(responder.id, mission!.route);
             simulateResponderInterval.start();
         }
     };

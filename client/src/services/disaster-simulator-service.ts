@@ -13,7 +13,6 @@ export class DisasterSimulatorService {
     }
 
     private handleError(message: string, error: AxiosError): Promise<any> {
-        console.error(`${message} ${error.message}`);
         throw new Error(message)
     }
 
