@@ -2,6 +2,8 @@ import axios, { AxiosError } from 'axios';
 import { RESPONDER_SERVICE } from '../../config';
 import log from '../../log';
 
+let responders = new Set<string>();
+
 async function getById(id: string): Promise<Responder> {
     const url = RESPONDER_SERVICE + `/responder/${id}`;
     return axios.get<Responder>(url, {
@@ -16,17 +18,16 @@ async function getById(id: string): Promise<Responder> {
         .catch(ex => handleError('Error retrieving responder by id', ex));
 }
 
-export async function isPerson(id: string): Promise<boolean> {
-    return getById(id).then((responder) => {
-        if (responder === null) {
-            return false;
-        }
-        if (!responder.person) {
-            return false;
-        } else {
-            return responder.person;
-        }
-    }).catch(() => { return false });
+export function register(id: string): void {
+    responders.add(id);
+}
+
+export function unregister(id: string): void {
+    responders.delete(id);
+}
+
+export function isRegistered(id: string): boolean {
+    return responders.has(id);
 }
 
 export async function update(responder: Responder): Promise<void> {

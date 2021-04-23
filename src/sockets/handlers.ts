@@ -6,6 +6,7 @@ import { getSocketDataContainerByResponder } from "./sockets";
 import { Mission } from "../services/mission-service/mission-service";
 import { ResponderService } from "../services/responder-service";
 import { MissionService } from "../services/mission-service";
+import { Responder } from "../services/responder-service/responder-service";
 
 type MessageHandlersContainer = {
     [key in IncomingMsgType]: {
@@ -37,6 +38,7 @@ const connectionHandler: any = async (container: SocketDataContainer, data: Conn
         type: OutgoingMsgType.ConnectionStatus,
         data: { status: 'ok' }
     });
+    ResponderService.register(data.responderId);
 };
 
 const availableHandler: any = (container: SocketDataContainer, data: ResponderAvailablePayload) => {
@@ -78,17 +80,30 @@ export class HandlerNotFoundError extends Error {
     }
 }
 
-export async function sendMission(responder: string, mission: Mission) {
+export async function missionAssigned(responder: string, mission: Mission) {
     log.debug('sending mission for responder ' + responder);
     let sdc = getSocketDataContainerByResponder(responder);
     if (sdc === null) {
         log.warn('no socketdatacontainer found for responder ' + responder);
     } else {
-
         sdc.send({
             id: uuid(),
             type: OutgoingMsgType.MissionAssigned,
             data: mission
+        });
+    };
+}
+
+export async function responderUpdated(responder: Responder) {
+    log.debug('sending responder update for responder ' + responder.id);
+    let sdc = getSocketDataContainerByResponder(responder.id);
+    if (sdc === null) {
+        log.warn('no socketdatacontainer found for responder ' + responder.id);
+    } else {
+        sdc.send({
+            id: uuid(),
+            type: OutgoingMsgType.ResponderUpdated,
+            data: responder
         });
     };
 }

@@ -9,5 +9,4 @@ export class Responder {
     available?: boolean;
     person?: boolean;
     enrolled?: boolean;
-    distanceUnit?: number;
 }

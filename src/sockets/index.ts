@@ -4,24 +4,32 @@ import { OutgoingMsgType } from './payloads';
 import { deleteSocketDataContainer, getAllSocketDataContainers, getSocketDataContainer } from './sockets';
 import { v4 as uuid } from "uuid";
 import { Mission } from '../services/mission-service/mission-service';
-import { sendMission } from './handlers';
+import { missionAssigned, responderUpdated } from './handlers';
+import { ResponderService } from '../services/responder-service';
+import { Responder } from '../services/responder-service/responder-service';
 
 export interface ISocketService {
     heartbeat: IHeartBeat;
-    sendMission: ISendMission;
+    missionAssigned: IMissionAssigned;
+    responderUpdated: IResponderUpdated;
 }
 
 export interface IHeartBeat {
     (interval: number): void
 }
 
-export interface ISendMission {
+export interface IMissionAssigned {
     (responderId: string, mission: Mission): void
+}
+
+export interface IResponderUpdated {
+    (responder: Responder): void
 }
 
 export const SocketService: ISocketService = {
     heartbeat: heartbeat as IHeartBeat,
-    sendMission: sendMission as ISendMission
+    missionAssigned: missionAssigned as IMissionAssigned,
+    responderUpdated: responderUpdated as IResponderUpdated
 }
 
 export function configureSocket(ws: WebSocket) {
@@ -32,6 +40,7 @@ export function configureSocket(ws: WebSocket) {
     ws.on('close', () => {
         log.debug('removing player socket and data container from map due to socket closure');
         deleteSocketDataContainer(ws);
+        ResponderService
     });
 }
 

@@ -56,9 +56,8 @@ function connect(hostname: string, dispatcher: Dispatcher, responder: Responder)
 
         switch (message.type) {
             case 'connection-status':
-                dispatcher.dispatch(message.type, data);
-                break;
             case 'mission-assigned':
+            case 'responder-updated':    
                 dispatcher.dispatch(message.type, data);
                 break;
         }

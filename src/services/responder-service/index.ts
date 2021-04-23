@@ -1,19 +1,28 @@
-import { isPerson, Responder, update } from "./responder-service";
+import { isRegistered, register, Responder, unregister, update } from "./responder-service";
 
 export interface IResponderService {
-    isPerson: IGetPerson;
     update: IUpdate;
-}
+    register: IRegister;
+    unregister: IRegister;
+    isRegistered: IIsRegistered;
 
-export interface IGetPerson {
-    (id: string): Promise<boolean>
 }
 
 export interface IUpdate {
-    (responder: Responder): Promise<void>
+    (responder: Responder): Promise<void>;
+}
+
+export interface IRegister {
+    (id: string): void;
+}
+
+export interface IIsRegistered {
+    (id: string): boolean;
 }
 
 export const ResponderService: IResponderService = {
-    isPerson: isPerson as IGetPerson,
-    update: update as IUpdate
+    update: update as IUpdate,
+    register: register as IRegister,
+    unregister: unregister as IRegister,
+    isRegistered: isRegistered as IIsRegistered
 };

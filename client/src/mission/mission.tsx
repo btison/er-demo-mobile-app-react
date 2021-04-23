@@ -48,6 +48,8 @@ const MissionComponent = (props: Props) => {
 
     const Toast = useToast();
 
+    const distanceUnit = useMemo(() => Utils.random(props.simulationDistanceBase, props.simulationDistanceBase * (1 + props.simulationDistanceVariation)), [props.simulationDistanceBase, props.simulationDistanceVariation]);
+
     const simulateResponderInterval: IntervalHookResult = useInterval(() => {
         if (mission === null) {
             return;
@@ -63,9 +65,6 @@ const MissionComponent = (props: Props) => {
         if (mission?.route.status === 'DROPPED') {
             setMission(null);
             setPickedup(false);
-            responder.enrolled = false;
-            responder.available = true;
-            setResponder(responder);
             setButton(BUTTON_AVAILABLE);
             simulateResponderInterval.stop();
         }
@@ -75,8 +74,6 @@ const MissionComponent = (props: Props) => {
         const DEFAULT_PHONE_NUMBER = '111-222-333';
         const DEFAULT_BOAT_CAPACITY = 12;
         const DEFAULT_MEDICAL_KIT = true;
-
-        let distanceUnit: number;
 
         const getResponder = async (): Promise<Responder> => {
             const responderName = `${props.userProfile.firstName} ${props.userProfile.lastName}`;
@@ -181,11 +178,25 @@ const MissionComponent = (props: Props) => {
                         mission.route = new Route();
                         mission.route.currentLocation = Location.of(data.responderStartLat, data.responderStartLong)
                         mission.route.route = new Deque(data.steps);
-
                         mission.route.distanceUnit = distanceUnit!;
                         setMission(mission);
                         setWaitingOnMission(false);
                         Toast.success('You have been assigned a mission').present();
+                        break;
+
+                    case 'responder-updated':
+                        const resp = new Responder();
+                        resp.id = data.id;
+                        resp.name = data.name;
+                        resp.phoneNumber = data.phoneNumber;
+                        resp.latitude = data.latitude;
+                        resp.longitude = data.longitude;
+                        resp.boatCapacity = data.boatCapacity;
+                        resp.medicalKit = data.medicalKit;
+                        resp.available = data.available;
+                        resp.enrolled = data.enrolled;
+                        resp.person = data.person;
+                        setResponder(resp);
                         break;
                 }
             }
@@ -196,8 +207,6 @@ const MissionComponent = (props: Props) => {
         });
         getShelters().then((shelters) => setShelters(shelters));
         getResponder().then((responder) => {
-            distanceUnit = Utils.random(props.simulationDistanceBase, props.simulationDistanceBase * (1 + props.simulationDistanceVariation));
-            responder.distanceUnit = distanceUnit;
             if (responder.latitude == null || responder.latitude === 0) {
                 generateLocation().then((location) => {
                     if (location) {
@@ -213,7 +222,7 @@ const MissionComponent = (props: Props) => {
             }
             SocketService.connect(props.hostname, dispatcher, responder);
         });
-    }, [props.userProfile, DEFAULT_CENTER, props.simulationDistanceBase, props.simulationDistanceVariation, props.hostname, Toast]);
+    }, [props.userProfile, DEFAULT_CENTER, props.simulationDistanceBase, props.simulationDistanceVariation, props.hostname, Toast, distanceUnit]);
 
     useEffect(() => {
         if (mission != null && mission.route.status === 'CREATED') {

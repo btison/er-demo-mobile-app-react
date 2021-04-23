@@ -12,6 +12,7 @@ import log from './log';
 import { ServerOptions } from 'ws';
 import { WebsocketPluginOptions } from 'fastify-websocket';
 import { SocketService } from './sockets';
+import { Responder } from './services/responder-service/responder-service';
 
 interface IParams {
     name?: string,
@@ -102,16 +103,27 @@ const run = async () => {
         eachMessage: async ({ topic, partition, message }) => {
             try {
                 const event = KafkaMessage.toEvent({ headers: message.headers!, body: message.value });
-                if (event.type === 'MissionStartedEvent') {
-                    let mission: Mission = event.data as Mission;
-                    let responderId = mission.responderId as string;
-                    ResponderService.isPerson(responderId).then((bool) => {
-                        if (bool) {
-                            log.debug(`Responder with id ${responderId} is a person`);
+                log.debug(`received message of type ${event.type}`);
+                switch (event.type) {
+                    case 'MissionStartedEvent':
+                        let mission: Mission = event.data as Mission;
+                        let responderId = mission.responderId as string;
+                        if (ResponderService.isRegistered(mission.responderId)) {
+                            log.debug(`Received MissionStartedEvent for Responder ${responderId}`);
                             MissionService.put(mission);
-                            SocketService.sendMission(responderId, mission);
+                            SocketService.missionAssigned(responderId, mission);
                         }
-                    });
+                        break;
+
+                    case 'ResponderUpdatedEvent':
+                        let responder: Responder = (event.data as any).responder as Responder;
+                        if (ResponderService.isRegistered(responder.id)) {
+                            log.debug(`Received ResponderUpdatedEvent for Responder ${responder.id}`);
+                            SocketService.responderUpdated(responder);
+                        }
+
+                    default:
+                        break;
                 }
             } catch (err) {
                 log.error(`Error when transforming incoming message to CloudEvent. ${err.message}`, err);
